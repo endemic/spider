@@ -1,0 +1,276 @@
+@font-face {
+  font-family: 'generic-mobile-system';
+  src: url('../fonts/generic-mobile-system.woff2') format('woff2');
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+body {
+  background: #0a5;
+  cursor: grab;
+  font-family: 'generic-mobile-system';
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  height: 100%;
+  position: relative;
+  width: 100%;
+}
+
+.card,
+.cell,
+.foundation {
+  /* width and height for these elements is set dynamically */
+  image-rendering: pixelated;
+  left: 0;
+  perspective: 500px;
+  position: absolute;
+  top: 0;
+  /* the box shadow looks weird with the flip transition; would need to turn shadow off */
+  /* box-shadow: 0 0.2rem 0.2rem rgba(0, 0 , 0, 0.1); */
+}
+
+.card > img {
+  backface-visibility: hidden;
+  height: 100%;
+  image-rendering: pixelated;
+  position: absolute;
+  transform-style: preserve-3d;
+  width: 100%;
+}
+
+.card .front { transform: rotateY(-180deg); }
+.card .back { transform: rotateY(0); }
+
+#menu {
+  align-items: center;
+  background-color: white;
+  border-bottom: 1px solid black;
+  box-sizing: border-box;
+  cursor: default;
+  display: flex;
+  height: 4%;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+button {
+  background-color: white;
+  border: 0;
+  color: black;
+  display: block;
+  font-family: 'generic-mobile-system';
+  font-size: 3vh;
+  height: 100%;
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+button:hover,
+button:active {
+  background-color: #010caa;
+  color: white;
+}
+
+#solve_button { display: none; }
+
+#status {
+  align-items: center;
+  background-color: white;
+  border-top: 1px solid black;
+  bottom: 0;
+  box-sizing: border-box;
+  display: flex;
+  font-size: 3vh;
+  height: 4%;
+  justify-content: space-between;
+  position: absolute;
+  width: 100%;
+}
+
+#status span {
+  display: block;
+  margin: 0 0.5rem;
+}
+
+@keyframes burst {
+    0% {
+      box-shadow: 0 0 1rem transparent;
+    }
+    50% {
+      box-shadow: 0 0 1rem white;
+    }
+    100% {
+      box-shadow: 0 0 2rem transparent;
+    }
+  }
+
+dialog {
+  background: navy;
+  cursor: default;
+  font-size: 1.5rem;
+  padding: 0;
+  border: 0;
+}
+
+dialog section {
+  box-sizing: border-box;
+  margin: 0.5rem;
+  border: 2px solid white;
+  background: white;
+  color: black;
+}
+
+dialog section h1 {
+  background: navy;
+  border-bottom: 2px solid black;
+  color: white;
+  font-size: 2rem;
+  font-weight: normal;
+  margin-top: 0;
+  text-align: center;
+  width: 100%;
+  line-height: 110%;
+}
+
+dialog .close {
+  background-color: lightgray;
+  color: white;
+  display: block;
+  height: 100%;
+  float: left;
+  width: 2.5rem;
+}
+
+dialog .close .bar {
+  width: 50%;
+  display: inline-block;
+  height: 2px;
+  border: 1px solid black;
+  box-shadow: 2px 2px 0 #7b7f83;
+  background-color: white;
+  vertical-align: 0.5rem;
+}
+
+dialog .content {
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  display: flex;
+  justify-content: flex-start;;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+dialog .content img {
+  width: 6rem;
+}
+
+dialog .content p {
+  margin-top: 0;
+}
+
+dialog form {
+  flex-basis: 100%;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+dialog h3 {
+  margin-bottom: 0.5rem;
+  font-weight: normal;
+}
+
+dialog ul {
+  margin-top: 0;
+}
+
+dialog figure {
+  background-color: yellow;
+  border-radius: 5rem;
+  border: 0.15rem solid black;
+  display: inline-block;
+  font-size: 3rem;
+  font-weight: bold;
+  letter-spacing: -0.1rem;
+  line-height: 0.5rem;
+  margin: 0;
+  padding: 1.65rem 1.45rem 1.25rem 1.45rem;
+}
+
+dialog #dialog-text {
+  margin: 0;
+}
+
+dialog button {
+  background-color: #bbbfc4;
+  border-bottom: 0.25rem solid #7b7f83;
+  border-left: 0.25rem solid #fff;
+  border-radius: 0.1rem;
+  border-right: 0.25rem solid #7b7f83;
+  border-top: 0.25rem solid #fff;
+  box-shadow: 0 0 0 0.15rem #000;
+  cursor: pointer;
+  font-size: 1.5rem;
+  height: auto;
+  display: inline-block;
+}
+
+dialog button .text {
+  border: 2px solid #bbbfc4;
+  display: inline-block;
+}
+
+dialog button:hover, dialog button:focus-visible {
+  background-color: #bbbfc4;
+  color: #000;
+  outline: none;
+  box-shadow: 0 0 0 0.20rem #000;
+}
+
+dialog button:hover .text {
+  border: 2px dotted #7b7f83;
+}
+
+dialog button:active {
+  border-bottom: 0.25rem solid #fff;
+  border-left: 0.25rem solid #7b7f83;
+  border-right: 0.25rem solid #fff;
+  border-top: 0.25rem solid #7b7f83;
+}
+
+dialog button:focus-visible .text {
+  border: 2px dotted #7b7f83;
+}
+
+@media (orientation: portrait) {
+  #menu {
+    height: 5%;
+  }
+
+  #menu button {
+    font-size: 4vh;
+  }
+
+  #status {
+    height: 5%;
+    font-size: 4vh;
+  }
+
+  #about .content {
+    flex-direction: column;
+  }
+
+  #about .content img {
+    display: none;
+  }
+}

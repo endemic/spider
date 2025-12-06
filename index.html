@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>FreeCell | Ganbaru Games</title>
+
+  <link rel="stylesheet" href="stylesheets/main.css">
+
+  <meta name="theme-color" content="#00aa55" media="(orientation: landscape)">
+  <meta name="theme-color" content="#ffffff" media="(orientation: portrait)">
+
+  <link rel="icon" type="image/png" sizes="48x48" href="metadata/images/favicon-48x48.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="metadata/images/apple-touch-icon.png">
+
+  <link rel="manifest" href="metadata/app.webmanifest">
+
+  <meta property="og:title" content="FreeCell" />
+  <meta property="og:description" content="Waste even moar time on the internet with this FreeCell clone." />
+  <meta property="og:url" content="https://ganbaru.games/freecell" />
+  <meta property="og:image" content="metadata/images/android-chrome-512x512.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+
+  <script src="scripts/ios-pwa-splash.js"></script>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="FreeCell" />
+</head>
+<body>
+  <script>
+    iosPWASplash('metadata/images/splash.png', 'black');
+  </script>
+
+  <canvas id="canvas"></canvas>
+
+  <section id="menu">
+    <button id="deal_button">Deal</button>
+    <button id="undo_button">Undo</button>
+    <button id="about_button">About</button>
+    <button id="solve_button">Solve</button>
+  </section>
+
+  <section id="status">
+    <span id="movable_cards">Movable Cards: 5</span>
+    <span id="time">Time: 0</span>
+  </section>
+
+  <!-- about -->
+
+  <dialog id="about">
+    <section>
+      <h1>
+        <div class="close"><span class="bar"></span></div>
+        About FreeCell
+      </h1>
+
+      <div class="content">
+        <img src="metadata/images/android-chrome-192x192.png" alt="FreeCell icon">
+
+        <div class="description">
+          <p>Developed by Nathan Demick. Inspired by <a href="https://www.linkedin.com/in/jahorne/" title="Jim Horne">Jim Horne</a>'s
+            version of FreeCell for Windows. <a href="https://en.wikipedia.org/wiki/FreeCell" title="Read more on Wikipedia" targe="_blank">Read more on Wikipedia</a></p>
+
+          <h3>Statistics</h3>
+
+          <ul>
+            <li>Games played: <span id="playedGames">0</span></li>
+            <li>Games won: <span id="wonGames">0</span></li>
+            <!-- <li>Fastest game: <span id="fastestGame">0</span></li> -->
+          </ul>
+
+          <button id="reset">
+            <span class="text">Reset</span>
+          </button>
+
+          <button id="return" autofocus>
+            <span class="text">OK</span>
+          </button>
+        </div> <!-- /.description-->
+      </div> <!-- /content-->
+    </section>
+  </dialog>
+
+  <!-- empty dialog for non-blocking `confirm` -->
+  <dialog id="confirm">
+    <section>
+      <h1>
+        <div class="close"><span class="bar"></span></div>
+        FreeCell
+      </h1>
+
+      <div class="content">
+        <figure>!</figure>
+        <p id="dialog-text"></p>
+
+        <form method="dialog">
+          <button value="yes" autofocus><span class="text">Yes</span></button>
+          <button value="no"><span class="text">No</span></button>
+        </form>
+      </div> <!-- /content-->
+    </section>
+  </dialog>
+
+  <script src="scripts/utils.js"></script>
+  <script src="scripts/card.js"></script>
+  <script src="scripts/stack.js"></script>
+  <script src="scripts/grabbed.js"></script>
+  <script src="scripts/cell.js"></script>
+  <script src="scripts/cascade.js"></script>
+  <script src="scripts/foundation.js"></script>
+  <script src="scripts/card-waterfall.js"></script>
+  <script src="scripts/about.js"></script>
+  <script src="scripts/game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('scripts/service-worker.js')
+        .then(() => { log('Service Worker Registered'); });
+    }
+  </script>
+
+</body>
+</html>
