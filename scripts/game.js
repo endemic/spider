@@ -121,25 +121,7 @@ const checkWin = () => {
   });
 };
 
-// If this function evaluates truthy, all stacks on the tableau are organized such that the game is basically won
-// const enableAutoSolve = () => {
-//   if (cascades.every(c => !c.hasCards || c.child.childrenInSequence)) {
-//     document.querySelector('#solve_button').style.display = 'block';
-//     return true;
-//   }
-//
-//   return false;
-// };
-
-// Electronic versions of the game allow you to pick up multiple
-// cards as a shortcut for putting them into open cells one at a time
-// You're always allowed to move at least one card, so the "formula"
-// is (open cells + 1)
-const movableCards = () => {
-  // return cells.reduce((total, cell) => total + (cell.hasCards ? 0 : 1), 1);
-};
-
-const updateMovableCardsLabel = () => document.querySelector('#movable_cards').textContent = `Movable Cards: ${movableCards()}`;
+const updateMovableCardsLabel = () => document.querySelector('#movable_cards').textContent = `Moves: TODO`;
 
 const attemptToPlayOnFoundation = async card => {
   for (let i = 0; i < foundations.length; i += 1) {
@@ -209,7 +191,6 @@ const reset = () => {
   });
 
   cascades.forEach(c => c.child = null);
-  // cells.forEach(c => c.child = null);
   foundations.forEach(f => f.child = null);
   talon.child = null;
 
@@ -219,8 +200,6 @@ const reset = () => {
   document.querySelector('#solve_button').style.display = 'none';
 
   undoStack.length = 0; // hack to empty an array
-
-  // updateMovableCardsLabel();
 };
 
 const stackCards = () => {
@@ -238,19 +217,15 @@ const stackCards = () => {
     [cards[currentIndex], cards[randomIndex]] = [cards[randomIndex], cards[currentIndex]];
   }
 
-  console.log('done shuffling')
-
   // move all cards to the talon
-//   TODO this is fucked
   for (let index = 0; index < cards.length; index += 1) {
     const card = cards[index];
     card.moveTo(talon.x, talon.y);
-    console.log(`set parent to ${talon.lastCard}`);
     card.setParent(talon.lastCard);
     card.zIndex = index;
   }
 
-  console.log('done moving cards to talon')
+  log('done moving cards to talon')
 };
 
 const deal = async () => {
@@ -258,13 +233,14 @@ const deal = async () => {
 
   // initial deal is 54 cards
   for (let index = 0; index < 54; index += 1) {
-    const card = cards[index];
+    // const card = cards[index];
+    const card = talon.lastCard;
 
     const cascade = cascades[index % cascades.length];
     const lastCard = cascade.lastCard;
 
     card.setParent(lastCard);
-    card.animateTo(lastCard.x, lastCard.y + offset, 0); // .75s animation
+    card.animateTo(lastCard.x, lastCard.y + offset, 0); // TODO: reset to .75s animation
 
     // only the last 10 cards are face up
     if (index > 43) {
@@ -291,7 +267,7 @@ const deal = async () => {
 
 // card event handler
 cards.forEach(card => {
-  const onDown = e => {
+  const onDown = async e => {
     e.preventDefault();
 
     if (gameOver) {
@@ -301,13 +277,28 @@ cards.forEach(card => {
     const point = getPoint(e);
     const delta = Date.now() - lastOnDownTimestamp;
     const doubleClick = delta < 500 && dist(point, previousPoint) < 15;
-    const movableCardCount = movableCards();
 
     // reset the timestamp that stores the last time the player clicked
     // if the current click counts as "double", then set the timestamp way in the past
     // otherwise you get a "3 click double click" because the 2nd/3rd clicks are too close together
     lastOnDownTimestamp = doubleClick ? 0 : Date.now();
     previousPoint = point;
+
+    if (card.stackType === 'talon') {
+      // deal 10 cards to all the cascades
+      for (const cascade of cascades) {
+        const c = talon.lastCard;
+        const parent = cascade.lastCard;
+        c.setParent(parent);
+        c.animateTo(parent.x, parent.y + grabbed.offset, 500);
+        c.zIndex = 999; // ensure animated card is on top of all others
+        wait(50).then(() => c.zIndex = parent.zIndex + 1);
+        c.flip();
+        await waitAsync(50);
+      }
+
+      return;
+    }
 
     // can only double-click to play on a foundation
     // if card is last in a cascade/cell
@@ -317,29 +308,13 @@ cards.forEach(card => {
       return;
     }
 
-    // only allow alternating sequences of cards to be picked up
+    // only allow sequences of cards to be picked up
     if (!card.childrenInSequence) {
       log(`can't pick up ${card}, not a sequence!`);
 
       // try to highlight cards that can be picked up
-      invertedCard = card.invertMovableCards(movableCardCount);
-
-      return;
-    }
-
-    // only allow a certain number of cards to be picked up
-    if (card.childCount >= movableCardCount) {  // let tableauDebug = document.createElement('div');
-  // tableauDebug.style.width = `${tableauWidth}px`;
-  // tableauDebug.style.height = `${tableauHeight}px`;
-  // tableauDebug.style.backgroundColor = 'rgba(255, 0, 255, 0.5)';
-  // tableauDebug.style.position = 'absolute';
-  // tableauDebug.style.top = `0`;
-  // tableauDebug.style.left = `${windowMargin}px`;
-  // document.body.append(tableauDebug);
-      log(`You can only pick up ${movableCardCount} cards!`);
-
-      // try to highlight cards that can be picked up
-      invertedCard = card.invertMovableCards(movableCardCount);
+      // TODO: remove the numeric arg from this method
+      invertedCard = card.invertMovableCards(99);
 
       return;
     }
@@ -502,11 +477,6 @@ const onResize = () => {
     foundation.size = { width, height };
     foundation.offset = 0;
   }
-
-  // for (const cell of cells) {
-  //   cell.size = { width, height };
-  //   cell.offset = 0;
-  // }
 
   for (const card of cards) {
     card.size = { width, height };

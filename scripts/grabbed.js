@@ -129,7 +129,12 @@ class Grabbed extends Stack {
     card.setParent(target);
 
     if (this.moved) {
-      let offset = this.offset;
+
+      // TODO: this is pretty stupid
+      let offset = card.offset;  // "faceDownOffset"
+      if (target.faceUp) {
+        offset = this.offset;  // "regular" offset
+      }
 
       // Don't add card overlap if dropping on an empty cascade or cell
       if (['cascade'].includes(target.type)) {
