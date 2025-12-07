@@ -132,7 +132,7 @@ class Grabbed extends Stack {
       let offset = this.offset;
 
       // Don't add card overlap if dropping on an empty cascade or cell
-      if (['cascade', 'cell'].includes(target.type)) {
+      if (['cascade'].includes(target.type)) {
         offset = 0;
       }
 

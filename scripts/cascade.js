@@ -43,7 +43,7 @@ class Cascade extends Stack {
     // if there are cards already played, ensure they are
     // alternating suits and the card rank is one lower than
     // the last card (and the last card has to be face up, too)
-    if (card.color !== lastCard.color && card.diff(lastCard) === -1 && lastCard.faceUp) {
+    if (/*card.color !== lastCard.color && */card.diff(lastCard) === -1 && lastCard.faceUp) {
       return true;
     }
 

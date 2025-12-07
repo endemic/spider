@@ -270,7 +270,7 @@ class Card {
     // if card is same color as previous, or the rank difference is greater than 1,
     // then the subsequent cards are not in sequence
     for (let card of this.children()) {
-      if (card.parent.color === card.color || card.diff(card.parent) !== -1) {
+      if (/*card.parent.color === card.color || */card.diff(card.parent) !== -1) {
         return false;
       }
     }

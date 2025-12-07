@@ -1,6 +1,6 @@
 {
-  "name": "FreeCell",
-  "short_name": "FreeCell",
+  "name": "Spider Solitaire",
+  "short_name": "Spider",
   "icons": [
       {
           "src": "metadata/images/android-chrome-192x192.png",

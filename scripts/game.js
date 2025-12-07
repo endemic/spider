@@ -1,6 +1,6 @@
 const SUITS = ['hearts', 'spades', 'diamonds', 'clubs'];
 const RANKS = ['ace', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'jack', 'queen', 'king'];
-const DEBUG = false;
+const DEBUG = true;
 
 // used for custom double-click/tap implementation
 // this val is set in `onDown` function; if it is called again rapidly
@@ -28,15 +28,17 @@ let time = 0;
 let invertedCard = null;
 
 const cascades = [];
-for (let i = 0; i < 8; i += 1) {
+for (let i = 0; i < 10; i += 1) {
   const cascade = new Cascade();
   cascade.moveTo(10 + (85 * i), 100);
   cascades.push(cascade);
 
-  // these don't have a visible component,
-  // so we don't need to append them to the DOM
+//   TODO: copy over the "cell" background to use for cascades; indicates a card should be placed in an empty one
+  // document.body.append(cascade.element);
 }
 
+// TODO: foundations will be at bottom of the screen, and will overlap slightly
+// will need 8, since spider uses 2 decks
 const foundations = [];
 for (let i = 0; i < 4; i += 1) {
   const foundation = new Foundation();
@@ -47,34 +49,63 @@ for (let i = 0; i < 4; i += 1) {
   document.body.append(foundation.element);
 }
 
-const cells = [];
-for (let i = 4; i < 8; i += 1) {
-  const cell = new Cell();
-  cell.moveTo(10 + (85 * i), 10);
-  cells.push(cell);
+// const cells = [];
+// for (let i = 4; i < 8; i += 1) {
+//   const cell = new Cell();
+//   cell.moveTo(10 + (85 * i), 10);
+//   cells.push(cell);
+//
+//   // Make these visible by adding to DOM
+//   document.body.append(cell.element);
+// }
 
-  // Make these visible by adding to DOM
-  document.body.append(cell.element);
-}
+const talon = new Talon();
+document.body.append(talon.element);
 
 const grabbed = new Grabbed();
 
 // array to hold refs to each card obj
 const cards = [];
 
-// initialize list of cards
-SUITS.forEach(suit => {
-  RANKS.forEach(rank => {
-    // instantiate new card object
-    const card = new Card(suit, rank);
+// based on difficulty, determine the correct types of cards to be initialized
+// hard => 4 suits (2 decks)
+// med => 2 suits (hearts + spades)
+// easy => 1 suit (spades)
 
-    // add the card's HTML to the page
-    document.body.append(card.element);
+let difficulty = 'easy';
 
-    // add the card object to a ref list
-    cards.push(card);
+const initCards = () => {
+  // remove existing cards
+  cards.forEach(c => {
+    // TODO
   });
-});
+
+  // re-init based on difficulty
+  const suitMap = {
+    hard: SUITS,
+    medium: ['hearts', 'spades'],
+    easy: ['spades']
+  };
+
+  while (cards.length < 104) {
+    for (let suit of suitMap[difficulty]) {
+      RANKS.forEach(rank => {
+        // instantiate new card object
+        const card = new Card(suit, rank);
+
+        // add the card's HTML to the page
+        document.body.append(card.element);
+
+        // add the card object to a ref list
+        cards.push(card);
+      });
+    }
+  }
+}
+
+// immediately init cards; TODO do this when difficulty changes
+initCards();
+
 
 const checkWin = () => {
   // ensure that each foundation has 13 cards; we don't check for matching suit
@@ -91,21 +122,21 @@ const checkWin = () => {
 };
 
 // If this function evaluates truthy, all stacks on the tableau are organized such that the game is basically won
-const enableAutoSolve = () => {
-  if (cascades.every(c => !c.hasCards || c.child.childrenInSequence)) {
-    document.querySelector('#solve_button').style.display = 'block';
-    return true;
-  }
-
-  return false;
-};
+// const enableAutoSolve = () => {
+//   if (cascades.every(c => !c.hasCards || c.child.childrenInSequence)) {
+//     document.querySelector('#solve_button').style.display = 'block';
+//     return true;
+//   }
+//
+//   return false;
+// };
 
 // Electronic versions of the game allow you to pick up multiple
 // cards as a shortcut for putting them into open cells one at a time
 // You're always allowed to move at least one card, so the "formula"
 // is (open cells + 1)
 const movableCards = () => {
-  return cells.reduce((total, cell) => total + (cell.hasCards ? 0 : 1), 1);
+  // return cells.reduce((total, cell) => total + (cell.hasCards ? 0 : 1), 1);
 };
 
 const updateMovableCardsLabel = () => document.querySelector('#movable_cards').textContent = `Movable Cards: ${movableCards()}`;
@@ -178,16 +209,18 @@ const reset = () => {
   });
 
   cascades.forEach(c => c.child = null);
-  cells.forEach(c => c.child = null);
+  // cells.forEach(c => c.child = null);
   foundations.forEach(f => f.child = null);
+  talon.child = null;
 
   time = 0;
+  // score = 0;
   document.querySelector('#time').textContent = `Time: ${time}`;
   document.querySelector('#solve_button').style.display = 'none';
 
   undoStack.length = 0; // hack to empty an array
 
-  updateMovableCardsLabel();
+  // updateMovableCardsLabel();
 };
 
 const stackCards = () => {
@@ -205,48 +238,58 @@ const stackCards = () => {
     [cards[currentIndex], cards[randomIndex]] = [cards[randomIndex], cards[currentIndex]];
   }
 
-  // move cards back to initial position
+  console.log('done shuffling')
+
+  // move all cards to the talon
+//   TODO this is fucked
   for (let index = 0; index < cards.length; index += 1) {
     const card = cards[index];
-
-    // move all cards on top of first foundation
-    card.moveTo(foundations[0].x, foundations[0].y);
-    card.zIndex = 51 - index;
+    card.moveTo(talon.x, talon.y);
+    console.log(`set parent to ${talon.lastCard}`);
+    card.setParent(talon.lastCard);
+    card.zIndex = index;
   }
+
+  console.log('done moving cards to talon')
 };
 
 const deal = async () => {
   let offset = 0;
 
-  // actually deal cards
-  for (let index = 0; index < cards.length; index += 1) {
+  // initial deal is 54 cards
+  for (let index = 0; index < 54; index += 1) {
     const card = cards[index];
 
     const cascade = cascades[index % cascades.length];
     const lastCard = cascade.lastCard;
 
     card.setParent(lastCard);
-    card.animateTo(lastCard.x, lastCard.y + offset, 750);
-    card.flip();
+    card.animateTo(lastCard.x, lastCard.y + offset, 0); // .75s animation
 
-    await waitAsync(50);
+    // only the last 10 cards are face up
+    if (index > 43) {
+      card.flip();
+    }
+
+    // await waitAsync(50);
 
     // update z-index of the card _after_ the synchronous delay;
     // this gives the animation time to move the card away from the deck
     card.resetZIndex()
 
     // only want to offset cards vertically after the first row
-    offset = index < 7 ? 0 : card.offset;
+    offset = index < 9 ? 0 : card.offset;cards.length / 2 - 10
   };
 
   // increment games played counter
-  const key = 'freecell:playedGames';
+  const key = 'spider:playedGames';
   let playedGames = parseInt(localStorage.getItem(key), 10) || 0;
   localStorage.setItem(key, playedGames + 1);
 
   gameOver = false;
 };
 
+// card event handler
 cards.forEach(card => {
   const onDown = e => {
     e.preventDefault();
@@ -285,7 +328,14 @@ cards.forEach(card => {
     }
 
     // only allow a certain number of cards to be picked up
-    if (card.childCount >= movableCardCount) {
+    if (card.childCount >= movableCardCount) {  // let tableauDebug = document.createElement('div');
+  // tableauDebug.style.width = `${tableauWidth}px`;
+  // tableauDebug.style.height = `${tableauHeight}px`;
+  // tableauDebug.style.backgroundColor = 'rgba(255, 0, 255, 0.5)';
+  // tableauDebug.style.position = 'absolute';
+  // tableauDebug.style.top = `0`;
+  // tableauDebug.style.left = `${windowMargin}px`;
+  // document.body.append(tableauDebug);
       log(`You can only pick up ${movableCardCount} cards!`);
 
       // try to highlight cards that can be picked up
@@ -327,89 +377,17 @@ const onUp = async () => {
 
   const card = grabbed.child;
 
-  // check foundations
-  for (let i = 0; i < foundations.length; i += 1) {
-    const foundation = foundations[i];
-
-    // only allow placement in foundation if a valid play, and
-    // player is holding a single card
-    if (grabbed.overlaps(foundation) && foundation.validPlay(card) && !card.hasCards) {
-      let parent = foundation.lastCard;
-
-      undoStack.push({
-        card,
-        parent,
-        oldParent: card.parent
-      });
-
-      grabbed.drop(parent); // either a card or the foundation itself
-      wait(150).then(() => card.flash());
-
-      log(`dropping ${card} on foundation #${i}`);
-
-      if (checkWin()) {
-        gameOver = true;
-
-        // increment games won counter
-        let key = 'freecell:wonGames';
-        let wonGames = parseInt(localStorage.getItem(key), 10) || 0;
-        localStorage.setItem(key, wonGames + 1);
-
-        // check for fastest game time
-        key = 'freecell:fastestGame';
-        let fastestGame = parseInt(localStorage.getItem(key), 10) || 0;
-        if (time < fastestGame) {
-          localStorage.setItem(key, time);
-        }
-
-        // wait for animation to finish
-        await waitAsync(250);
-
-        CardWaterfall.start(() => {
-          reset();
-          stackCards();
-        });
-      }
-
-      updateMovableCardsLabel();
-
-      // valid play, so break out of the loop checking other foundations
-      return;
-    }
-  }
-
-  // check cells
-  for (let i = 0; i < cells.length; i += 1) {
-    const cell = cells[i];
-
-    // only allow placemnt in a cell if the cell is empty and
-    // player is holding a single card
-    if (grabbed.overlaps(cell) && !cell.hasCards && !card.hasCards) {
-      let parent = cell;
-
-      undoStack.push({
-        card,
-        parent,
-        oldParent: card.parent
-      });
-
-      grabbed.drop(cell);
-
-      log(`dropping ${card} on cell #${i}`);
-
-      updateMovableCardsLabel();
-      enableAutoSolve();
-
-      // valid play, so return out of the loop checking other cells
-      return;
-    }
-  }
-
   // check cascades
   for (let i = 0; i < cascades.length; i += 1) {
     const cascade = cascades[i];
 
     if (grabbed.overlaps(cascade) && cascade.validPlay(card)) {
+      // flip over the newly uncovered card
+      if (card.parent.type === 'card' && !card.parent.faceUp) {
+        card.parent.flip();
+      }
+
+      // set new parent
       let parent = cascade.lastCard;
 
       undoStack.push({
@@ -423,7 +401,7 @@ const onUp = async () => {
       log(`dropping ${card} on cascade #${i}`);
 
       updateMovableCardsLabel();
-      enableAutoSolve();
+      // enableAutoSolve();
 
       // valid play, so return out of the loop checking other cells
       return;
@@ -464,7 +442,14 @@ const autoSolve = async () => {
     }
   }
 };
-
+  // let tableauDebug = document.createElement('div');
+  // tableauDebug.style.width = `${tableauWidth}px`;
+  // tableauDebug.style.height = `${tableauHeight}px`;
+  // tableauDebug.style.backgroundColor = 'rgba(255, 0, 255, 0.5)';
+  // tableauDebug.style.position = 'absolute';
+  // tableauDebug.style.top = `0`;
+  // tableauDebug.style.left = `${windowMargin}px`;
+  // document.body.append(tableauDebug);
 const onResize = () => {
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
@@ -488,23 +473,24 @@ const onResize = () => {
   let windowMargin = (windowWidth - tableauWidth) / 2;
 
   // debug tableau size for layout testing
-  // let tableauDebug = document.createElement('div');
-  // tableauDebug.style.width = `${tableauWidth}px`;
-  // tableauDebug.style.height = `${tableauHeight}px`;
-  // tableauDebug.style.backgroundColor = 'rgba(255, 0, 255, 0.5)';
-  // tableauDebug.style.position = 'absolute';
-  // tableauDebug.style.top = `0`;
-  // tableauDebug.style.left = `${windowMargin}px`;
-  // document.body.append(tableauDebug);
+  let tableauDebug = document.createElement('div');
+  tableauDebug.style.width = `${tableauWidth}px`;
+  tableauDebug.style.height = `${tableauHeight}px`;
+  tableauDebug.style.backgroundColor = 'rgba(255, 0, 255, 0.5)';
+  tableauDebug.style.position = 'absolute';
+  tableauDebug.style.top = `20px`;
+  tableauDebug.style.left = `${windowMargin}px`;
+  document.body.append(tableauDebug);
 
   const widthInPixels = 680;
   const heightInPixels = 680;
 
   // set card sizes/margins here
-  const margin = (5 / widthInPixels) * tableauWidth; // arbitrary horiztonal margin between cards (6px)
-  const width = (80 / widthInPixels) * tableauWidth; // card width (80px)
-  const height = (115 / heightInPixels) * tableauHeight; // card height (115px)
+  const margin = (4 / widthInPixels) * tableauWidth; // arbitrary horiztonal margin between cards (6px)
+  const width = (64 / widthInPixels) * tableauWidth; // card width (80px)
+  const height = (92 / heightInPixels) * tableauHeight; // card height (115px)
   const offset = (30 / heightInPixels) * tableauHeight; // arbitrary vertical diff between stacked cards
+  const faceDownOffset = height / 10; // ~13px
 
   // enumerate over all cards/stacks in order to set their width/height
   for (const cascade of cascades) {
@@ -517,15 +503,17 @@ const onResize = () => {
     foundation.offset = 0;
   }
 
-  for (const cell of cells) {
-    cell.size = { width, height };
-    cell.offset = 0;
-  }
+  // for (const cell of cells) {
+  //   cell.size = { width, height };
+  //   cell.offset = 0;
+  // }
 
   for (const card of cards) {
     card.size = { width, height };
-    card.offset = offset;
+    card.offset = faceDownOffset;
   }
+
+  talon.size = { width, height };
 
   grabbed.size = { width, height };
   grabbed.offset = offset;
@@ -540,24 +528,21 @@ const onResize = () => {
 
   const top = margin + menu.offsetHeight;
   const left = windowMargin + margin / 2;
-
-  // foundations on the left
-  foundations.forEach((f, i) => {
-    f.moveTo(left + (width + margin) * i, top);
-  });
-
-  // cells are on the right; the (i + 4) allows space for foundations
-  cells.forEach((c, i) => {
-    c.moveTo(left + (width + margin) * (i + 4), top)
-  });
+  const bottom = heightInPixels - status.offsetHeight;
 
   cascades.forEach((c, i) => {
-    // allows space for cells/foundation
-    c.moveTo(windowMargin + margin / 2 + (width + margin) * i, top + height + margin)
+    // put at top of window
+    c.moveTo(left + (width + margin) * i, top + margin)
+  });
+
+  // foundations on the bottom
+  foundations.forEach((f, i) => {
+    f.moveTo(left + (width + margin) * i, bottom);
   });
 
   // Handle resizing <canvas> for card waterfall
-  CardWaterfall.onResize(windowWidth, windowHeight);
+  // CardWaterfall.onResize(windowWidth, windowHeight);
+  talon.moveTo(windowWidth - windowMargin - margin / 2 - width, bottom);
 
   // if in a "game over" state, cards are stacked on top of the left-most foundation, and
   // won't be moved along with it, because they are not attached
@@ -668,17 +653,17 @@ onResize();
 stackCards();
 
 // set up a win condition; comment out `stackCards` to use this
-if (DEBUG) {
-  for (let i = 0; i < foundations.length; i += 1) {
-    let foundation = foundations[i];
-
-    // move all cards to winning positions
-    for (let j = 0; j < 13; j += 1) {
-      let card = cards[(13 * i) + j];
-      card.flip();
-      let parent = foundation.lastCard;
-      card.setParent(parent);
-      card.moveTo(parent.x, parent.y);
-    }
-  }
-}
+// if (DEBUG) {
+//   for (let i = 0; i < foundations.length; i += 1) {
+//     let foundation = foundations[i];
+//
+//     // move all cards to winning positions
+//     for (let j = 0; j < 13; j += 1) {
+//       let card = cards[(13 * i) + j];
+//       card.flip();
+//       let parent = foundation.lastCard;
+//       card.setParent(parent);
+//       card.moveTo(parent.x, parent.y);
+//     }
+//   }
+// }
