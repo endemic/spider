@@ -1,6 +1,14 @@
 class Cascade extends Stack {
   type = 'cascade';
 
+  constructor() {
+    super();
+
+    this.element = document.createElement('img');
+    this.element.classList.add('cascade');
+    this.element.src = 'images/other/cascade.png';
+  }
+
   get size() {
     if (!this.hasCards) {
       return {
@@ -41,13 +49,30 @@ class Cascade extends Stack {
     }
 
     // if there are cards already played, ensure they are
-    // alternating suits and the card rank is one lower than
+    // _the same suit_ and the card rank is one lower than
     // the last card (and the last card has to be face up, too)
-    if (/*card.color !== lastCard.color && */card.diff(lastCard) === -1 && lastCard.faceUp) {
+    if (card.suit === lastCard.suit && card.diff(lastCard) === -1 && lastCard.faceUp) {
       return true;
     }
 
     // your situation is unfortunate!
     return false;
+  }
+
+  get hasAllRanks() {
+    const ranks = ['ace', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'jack', 'queen', 'king'].reverse();
+
+    // if a sequence of child cards go from king -> ace in descending order
+    for (const card of this.children()) {
+      if (card.rank === ranks[0]) {
+        ranks.shift();
+
+      // if sequence has started but was broken
+      } else if (ranks.length < 13) {
+        return false;
+      }
+    }
+
+    return ranks.length === 0 && this.lastCard.rank === 'ace';
   }
 }

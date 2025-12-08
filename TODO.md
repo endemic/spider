@@ -2,7 +2,7 @@
 
 - [x] 54th dealt card can't be picked up -- it still has a child referenced in the talon
 - [ ] When a cascade contains a full 13 sequence of cards, move them to a foundation
-- [ ] When a face-up card returns to a face-down stack, its offset is incorrectly increased
+- [x] When a face-up card returns to a face-down stack, its offset is incorrectly increased
   * same with deal; deal offset uses card offset instead of "grabbed" offset
   * card on face up card needs "grabbed" offset
 - [x] Create a tableau with 10 cascades

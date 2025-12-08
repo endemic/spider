@@ -30,34 +30,21 @@ let invertedCard = null;
 const cascades = [];
 for (let i = 0; i < 10; i += 1) {
   const cascade = new Cascade();
-  cascade.moveTo(10 + (85 * i), 100);
   cascades.push(cascade);
 
-//   TODO: copy over the "cell" background to use for cascades; indicates a card should be placed in an empty one
-  // document.body.append(cascade.element);
+  document.body.append(cascade.element);
 }
 
-// TODO: foundations will be at bottom of the screen, and will overlap slightly
-// will need 8, since spider uses 2 decks
 const foundations = [];
-for (let i = 0; i < 4; i += 1) {
+for (let i = 0; i < 8; i += 1) {
   const foundation = new Foundation();
-  foundation.moveTo(10 + (85 * i), 10);
   foundations.push(foundation);
+  foundation.zIndex = i;
 
+  // TODO: these can be hidden
   // Make these visible by adding to DOM
-  document.body.append(foundation.element);
+  // document.body.append(foundation.element);
 }
-
-// const cells = [];
-// for (let i = 4; i < 8; i += 1) {
-//   const cell = new Cell();
-//   cell.moveTo(10 + (85 * i), 10);
-//   cells.push(cell);
-//
-//   // Make these visible by adding to DOM
-//   document.body.append(cell.element);
-// }
 
 const talon = new Talon();
 document.body.append(talon.element);
@@ -284,6 +271,11 @@ cards.forEach(card => {
     lastOnDownTimestamp = doubleClick ? 0 : Date.now();
     previousPoint = point;
 
+    // don't allow interaction with foundations
+    if (card.stackType === 'foundation') {
+      return;
+    }
+
     if (card.stackType === 'talon') {
       // deal 10 cards to all the cascades
       for (const cascade of cascades) {
@@ -377,6 +369,25 @@ const onUp = async () => {
 
       updateMovableCardsLabel();
       // enableAutoSolve();
+
+//       TODO: check to see if full 13 card stack exists in the cascade
+      if (cascade.hasAllRanks) {
+        const emptyFoundation = foundations.find(f => !f.hasCards);
+        for (let j = 0; j < 13; j += 1) {
+          const source = cascade.lastCard;
+          const target = emptyFoundation.lastCard;
+          source.setParent(target);
+          source.animateTo(target.x, target.y, 50);
+          await waitAsync(50);
+
+          // TODO: add this group move to the undo stack
+        }
+
+        // if king was on a face-down card, turn it face up
+        if (cascade.lastCard.type === 'card' && !cascade.lastCard.faceUp) {
+          cascade.lastCard.flip();
+        }
+      }
 
       // valid play, so return out of the loop checking other cells
       return;
@@ -507,7 +518,7 @@ const onResize = () => {
 
   // foundations on the bottom
   foundations.forEach((f, i) => {
-    f.moveTo(left + (width + margin) * i, bottom);
+    f.moveTo(left + (width / 3 + margin) * i, bottom);
   });
 
   // Handle resizing <canvas> for card waterfall
