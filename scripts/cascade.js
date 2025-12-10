@@ -1,5 +1,6 @@
 class Cascade extends Stack {
   type = 'cascade';
+  rank = undefined; // property defined to handle a stack of 13 cards on a bare cascade
 
   constructor() {
     super();
@@ -60,19 +61,18 @@ class Cascade extends Stack {
   }
 
   get hasAllRanks() {
-    const ranks = ['ace', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'jack', 'queen', 'king'].reverse();
+    const ranks = ['ace', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'jack', 'queen', 'king'];
 
-    // if a sequence of child cards go from king -> ace in descending order
-    for (const card of this.children()) {
-      if (card.rank === ranks[0]) {
-        ranks.shift();
+    let c = this.lastCard;
 
-      // if sequence has started but was broken
-      } else if (ranks.length < 13) {
-        return false;
-      }
+    if (c.rank !== 'ace') {
+      return false;
     }
 
-    return ranks.length === 0 && this.lastCard.rank === 'ace';
+    while (c.rank === ranks.shift()) {
+      c = c.parent;
+    }
+
+    return ranks.length === 0;
   }
 }

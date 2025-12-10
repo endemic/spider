@@ -2,15 +2,6 @@ const SUITS = ['hearts', 'spades', 'diamonds', 'clubs'];
 const RANKS = ['ace', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'jack', 'queen', 'king'];
 const DEBUG = true;
 
-// used for custom double-click/tap implementation
-// this val is set in `onDown` function; if it is called again rapidly
-// (e.g. within 500ms) then the interaction counts as a double-click
-let lastOnDownTimestamp = Date.now();
-
-// stores the last click/touch point; used because double-clicks
-// need to be close together
-let previousPoint = { x: 0, y: 0};
-
 // array to hold inverse move data
 const undoStack = [];
 
@@ -40,12 +31,9 @@ for (let i = 0; i < 8; i += 1) {
   const foundation = new Foundation();
   foundations.push(foundation);
   foundation.zIndex = i;
-
-  // TODO: these can be hidden
-  // Make these visible by adding to DOM
-  // document.body.append(foundation.element);
 }
 
+// TODO: show how many deals are left in talon
 const talon = new Talon();
 document.body.append(talon.element);
 
@@ -59,12 +47,12 @@ const cards = [];
 // med => 2 suits (hearts + spades)
 // easy => 1 suit (spades)
 
+// TODO: get difficulty from modal form
 let difficulty = 'easy';
 
 const initCards = () => {
-  // remove existing cards
   cards.forEach(c => {
-    // TODO
+    // TODO remove any existing cards
   });
 
   // re-init based on difficulty
@@ -74,7 +62,7 @@ const initCards = () => {
     easy: ['spades']
   };
 
-  while (cards.length < 104) {
+  while (cards.length < 104) { // 52 x 2 cards (two decks)
     for (let suit of suitMap[difficulty]) {
       RANKS.forEach(rank => {
         // instantiate new card object
@@ -108,66 +96,8 @@ const checkWin = () => {
   });
 };
 
+// TODO probably update this to show how many moves have been completed
 const updateMovableCardsLabel = () => document.querySelector('#movable_cards').textContent = `Moves: TODO`;
-
-const attemptToPlayOnFoundation = async card => {
-  for (let i = 0; i < foundations.length; i += 1) {
-    const foundation = foundations[i];
-
-    if (foundation.validPlay(card)) {
-      let parent = foundation.lastCard;  // either a card or the foundation itself
-
-      undoStack.push({
-        card,
-        parent,
-        oldParent: card.parent
-      });
-
-      card.setParent(parent);
-      card.zIndex = 52; // ensure card doesn't animate _under_ others
-      card.animateTo(parent.x, parent.y);
-
-      // show a brief "flash" when the card is close to the foundation
-      wait(150).then(() => card.flash());
-
-      // Ensure card z-index is correct _after_ it animates
-      wait(250).then(() => card.resetZIndex());
-
-      log(`playing ${card} on foundation #${i}`);
-
-      if (checkWin()) {
-        gameOver = true;
-
-        // increment games won counter
-        let key = 'freecell:wonGames';
-        let wonGames = parseInt(localStorage.getItem(key), 10) || 0;
-        localStorage.setItem(key, wonGames + 1);
-
-        // check for fastest game time
-        key = 'freecell:fastestGame';
-        let fastestGame = localStorage.getItem(key);
-        if (time < fastestGame) {
-          localStorage.setItem(key, time);
-        }
-
-        // wait for animation to finish
-        await waitAsync(250);
-
-        CardWaterfall.start(() => {
-          reset();
-          stackCards();
-        });
-      }
-
-      updateMovableCardsLabel();
-
-      // if we have a valid play, return from this function;
-      return true;
-    }
-  }
-
-  return false;
-};
 
 const reset = () => {
   cards.forEach(c => {
@@ -184,6 +114,8 @@ const reset = () => {
   time = 0;
   // score = 0;
   document.querySelector('#time').textContent = `Time: ${time}`;
+
+//   TODO: do we need a "solve" button? I don't think so
   document.querySelector('#solve_button').style.display = 'none';
 
   undoStack.length = 0; // hack to empty an array
@@ -262,14 +194,6 @@ cards.forEach(card => {
     }
 
     const point = getPoint(e);
-    const delta = Date.now() - lastOnDownTimestamp;
-    const doubleClick = delta < 500 && dist(point, previousPoint) < 15;
-
-    // reset the timestamp that stores the last time the player clicked
-    // if the current click counts as "double", then set the timestamp way in the past
-    // otherwise you get a "3 click double click" because the 2nd/3rd clicks are too close together
-    lastOnDownTimestamp = doubleClick ? 0 : Date.now();
-    previousPoint = point;
 
     // don't allow interaction with foundations
     if (card.stackType === 'foundation') {
@@ -284,19 +208,11 @@ cards.forEach(card => {
         c.setParent(parent);
         c.animateTo(parent.x, parent.y + grabbed.offset, 500);
         c.zIndex = 999; // ensure animated card is on top of all others
-        wait(50).then(() => c.zIndex = parent.zIndex + 1);
+        wait(500).then(() => c.zIndex = parent.zIndex + 1);
         c.flip();
         await waitAsync(50);
       }
 
-      return;
-    }
-
-    // can only double-click to play on a foundation
-    // if card is last in a cascade/cell
-    if (doubleClick && !card.hasCards && !card.animating) {
-      log(`double click! attempt to play ${card} on foundations`);
-      attemptToPlayOnFoundation(card);
       return;
     }
 
@@ -387,6 +303,28 @@ const onUp = async () => {
         if (cascade.lastCard.type === 'card' && !cascade.lastCard.faceUp) {
           cascade.lastCard.flip();
         }
+
+        if (checkWin()) {
+          gameOver = true;
+
+          // increment games won counter
+          let key = 'spider:wonGames';
+          let wonGames = parseInt(localStorage.getItem(key), 10) || 0;
+          localStorage.setItem(key, wonGames + 1);
+
+          // check for fastest game time
+          key = 'spider:fastestGame';
+          let fastestGame = localStorage.getItem(key);
+          if (time < fastestGame) {
+            localStorage.setItem(key, time);
+          }
+
+          // TODO: fireworks
+          CardWaterfall.start(() => {
+            reset();
+            stackCards();
+          });
+        }
       }
 
       // valid play, so return out of the loop checking other cells
@@ -459,14 +397,14 @@ const onResize = () => {
   let windowMargin = (windowWidth - tableauWidth) / 2;
 
   // debug tableau size for layout testing
-  let tableauDebug = document.createElement('div');
-  tableauDebug.style.width = `${tableauWidth}px`;
-  tableauDebug.style.height = `${tableauHeight}px`;
-  tableauDebug.style.backgroundColor = 'rgba(255, 0, 255, 0.5)';
-  tableauDebug.style.position = 'absolute';
-  tableauDebug.style.top = `20px`;
-  tableauDebug.style.left = `${windowMargin}px`;
-  document.body.append(tableauDebug);
+  // let tableauDebug = document.createElement('div');
+  // tableauDebug.style.width = `${tableauWidth}px`;
+  // tableauDebug.style.height = `${tableauHeight}px`;
+  // tableauDebug.style.backgroundColor = 'rgba(255, 0, 255, 0.5)';
+  // tableauDebug.style.position = 'absolute';
+  // tableauDebug.style.top = `20px`;
+  // tableauDebug.style.left = `${windowMargin}px`;
+  // document.body.append(tableauDebug);
 
   const widthInPixels = 680;
   const heightInPixels = 680;

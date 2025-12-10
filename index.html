@@ -59,8 +59,31 @@
         <img src="metadata/images/android-chrome-192x192.png" alt="Spider Solitaire icon">
 
         <div class="description">
-          <p>Developed by Nathan Demick. Inspired by <a href="https://www.linkedin.com/in/jahorne/" title="Jim Horne">Jim Horne</a>'s
-            version of Spider Solitaire for Windows. <a href="https://en.wikipedia.org/wiki/Spider_(solitaire)" title="Read more on Wikipedia" targe="_blank">Read more on Wikipedia</a></p>
+          <p>Developed by Nathan Demick. Inspired by Spider Solitaire for Windows. <a href="https://en.wikipedia.org/wiki/Spider_(solitaire)" title="Read more on Wikipedia" targe="_blank">Read more on Wikipedia</a></p>
+
+
+          <form id="options">
+            <fieldset>
+              <legend>Difficulty</legend>
+              <label for="easy">
+                ♠️
+                <input type="radio" name="difficulty" id="easy" value="easy" autocomplete="off" checked>
+                Easy: One Suit
+              </label>
+              <br>
+              <label for="medium">
+                ♥️♠️
+                <input type="radio" name="difficulty" id="medium" value="medium" autocomplete="off">
+                Medium: Two Suits
+              </label>
+              <br>
+              <label for="hard">
+                ♦️♣️♥️♠️
+                <input type="radio" name="difficulty" id="hard" value="hard" autocomplete="off">
+                Hard: Four Suits
+              </label>
+            </fieldset>
+          </form>
 
           <h3>Statistics</h3>
 
