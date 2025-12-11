@@ -201,6 +201,7 @@ cards.forEach(card => {
     }
 
     if (card.stackType === 'talon') {
+      // TODO: "You are not allowed to deal a new row while there are any empty slots."
       // deal 10 cards to all the cascades
       for (const cascade of cascades) {
         const c = talon.lastCard;
@@ -284,9 +285,7 @@ const onUp = async () => {
       log(`dropping ${card} on cascade #${i}`);
 
       updateMovableCardsLabel();
-      // enableAutoSolve();
 
-//       TODO: check to see if full 13 card stack exists in the cascade
       if (cascade.hasAllRanks) {
         const emptyFoundation = foundations.find(f => !f.hasCards);
         for (let j = 0; j < 13; j += 1) {
@@ -294,9 +293,12 @@ const onUp = async () => {
           const target = emptyFoundation.lastCard;
           source.setParent(target);
           source.animateTo(target.x, target.y, 50);
+          source.zIndex = target.zIndex + 1;
           await waitAsync(50);
 
           // TODO: add this group move to the undo stack
+          // it needs to be grouped in with the move that created the 13 card stack,
+          // since a full run auto-plays to foundation
         }
 
         // if king was on a face-down card, turn it face up
@@ -419,6 +421,7 @@ const onResize = () => {
   // enumerate over all cards/stacks in order to set their width/height
   for (const cascade of cascades) {
     cascade.size = { width, height };
+    log(`cascade size: ${width}, ${height}`)
     cascade.offset = offset;
   }
 
@@ -456,18 +459,15 @@ const onResize = () => {
 
   // foundations on the bottom
   foundations.forEach((f, i) => {
-    f.moveTo(left + (width / 3 + margin) * i, bottom);
+    f.moveTo(left + (width / 3 + margin) * i, windowHeight - height - margin - status.offsetHeight);
   });
 
   // Handle resizing <canvas> for card waterfall
   // CardWaterfall.onResize(windowWidth, windowHeight);
-  talon.moveTo(windowWidth - windowMargin - margin / 2 - width, bottom);
+  talon.moveTo(windowWidth - windowMargin - margin - width, windowHeight - height - margin - status.offsetHeight);
+  log(`moving talon to ${talon.x}, ${talon.y}`)
 
-  // if in a "game over" state, cards are stacked on top of the left-most foundation, and
-  // won't be moved along with it, because they are not attached
-  if (gameOver) {
-    cards.forEach(c => c.moveTo(foundations[0].x, foundations[0].y));
-  }
+
 };
 
 const undo = () => {

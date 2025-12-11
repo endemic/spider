@@ -1,6 +1,5 @@
 class Cascade extends Stack {
   type = 'cascade';
-  rank = undefined; // property defined to handle a stack of 13 cards on a bare cascade
 
   constructor() {
     super();
@@ -38,7 +37,10 @@ class Cascade extends Stack {
     this.width = width;
     this.height = height;
 
-    log(`setting ${this.type} size: ${width}, ${height}`);
+    log(`setting card size: ${width}, ${height}`);
+
+    this.element.style.width = `${this.width}px`;
+    this.element.style.height = `${this.height}px`;
   }
 
   validPlay (card) {
@@ -69,7 +71,7 @@ class Cascade extends Stack {
       return false;
     }
 
-    while (c.rank === ranks.shift()) {
+    while (c && c.faceUp && c.rank === ranks.shift()) {
       c = c.parent;
     }
 

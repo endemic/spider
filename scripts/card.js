@@ -82,6 +82,7 @@ class Card {
   get stackType() {
     let parent = this.parent;
 
+
     while (parent.parent) {
       parent = parent.parent;
     }
@@ -214,7 +215,7 @@ class Card {
     this.width = width;
     this.height = height;
 
-    log(`setting card size: ${width}, ${height}`);
+    // log(`setting card size: ${width}, ${height}`);
 
     this.element.style.width = `${this.width}px`;
     this.element.style.height = `${this.height}px`;
