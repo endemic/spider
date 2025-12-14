@@ -46,7 +46,7 @@ class Grabbed extends Stack {
     let offset = 0;
     for (let card of this.children()) {
       card.moveTo(this.x, this.y + offset);
-      offset += this.offset;
+      offset += card.faceUpOffset; // always use face up offset, as you can only hold face up cards
     }
   }
 
@@ -129,23 +129,10 @@ class Grabbed extends Stack {
     card.setParent(target);
 
     if (this.moved) {
+      let offset = target.faceUp ? card.faceUpOffset : card.faceDownOffset;
 
-      // TODO: this is pretty stupid; the idea being that if `grabbed` drops on a card
-      // that's face up, we need to increase the offset so that the underlying card is still
-      // visible.
-      let offset = card.offset;  // "faceDownOffset"
-      if (target.faceUp) {
-        offset = this.offset;  // "regular" offset
-      }
-
-      // Don't add card overlap if dropping on an empty cascade or cell
-      if (['cascade'].includes(target.type)) {
-        offset = 0;
-      }
-
-      // don't add card overlap on foundations; note that we use
-      // "stackType" here since cards can stack up on foundations
-      if (['foundation'].includes(target.stackType)) {
+      // Don't add card overlap if dropping on an empty cascade
+      if (target.type === 'cascade') {
         offset = 0;
       }
 

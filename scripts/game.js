@@ -172,8 +172,8 @@ const deal = async () => {
     // this gives the animation time to move the card away from the deck
     card.resetZIndex()
 
-    // only want to offset cards vertically after the first row
-    offset = index < 9 ? 0 : card.offset;cards.length / 2 - 10
+    // offset cards vertically after the first row
+    offset = index < 9 ? 0 : card.faceDownOffset;
   };
 
   // increment games played counter
@@ -207,7 +207,7 @@ cards.forEach(card => {
         const c = talon.lastCard;
         const parent = cascade.lastCard;
         c.setParent(parent);
-        c.animateTo(parent.x, parent.y + grabbed.offset, 500);
+        c.animateTo(parent.x, parent.y + card.faceUpOffset, 500);
         c.zIndex = 999; // ensure animated card is on top of all others
         wait(500).then(() => c.zIndex = parent.zIndex + 1);
         c.flip();
@@ -422,32 +422,29 @@ const onResize = () => {
   const margin = (4 / widthInPixels) * tableauWidth; // arbitrary horiztonal margin between cards (6px)
   const width = (64 / widthInPixels) * tableauWidth; // card width (80px)
   const height = (92 / heightInPixels) * tableauHeight; // card height (115px)
-  const offset = (30 / heightInPixels) * tableauHeight; // arbitrary vertical diff between stacked cards
-  const faceDownOffset = height / 10; // ~13px
+  const faceUpOffset = height / 4; // ~18px; arbitrary vertical diff between stacked cards
+  const faceDownOffset = height / 10; // ~9px
 
   // enumerate over all cards/stacks in order to set their width/height
   for (const cascade of cascades) {
     cascade.size = { width, height };
-    log(`cascade size: ${width}, ${height}`)
-    // cascade.offset = offset;
-    cascade.faceUpOffset = offset;
+    cascade.faceUpOffset = faceUpOffset;
     cascade.faceDownOffset = faceDownOffset;
   }
 
   for (const foundation of foundations) {
     foundation.size = { width, height };
-    foundation.offset = 0;
   }
 
   for (const card of cards) {
     card.size = { width, height };
-    card.offset = faceDownOffset;
+    card.faceUpOffset = faceUpOffset;
+    card.faceDownOffset = faceDownOffset;
   }
 
   talon.size = { width, height };
 
   grabbed.size = { width, height };
-  grabbed.offset = offset;
 
   // Layout code
   const menu = document.querySelector('#menu');
@@ -459,7 +456,7 @@ const onResize = () => {
 
   const top = margin + menu.offsetHeight;
   const left = windowMargin + margin / 2;
-  const bottom = heightInPixels - status.offsetHeight;
+  // const bottom = heightInPixels - status.offsetHeight;
 
   cascades.forEach((c, i) => {
     // put at top of window
@@ -510,6 +507,9 @@ const undo = undoObject => {
 
   if (flip) {
     card.flip();
+    // issue: if an undo moves a card back to a card that was flipped face up
+    // as part of the undo group, the move happens first, and the target is now face
+    // up so the offset is wrong
   }
 
   if (points) {

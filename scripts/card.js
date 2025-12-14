@@ -21,7 +21,8 @@ class Card {
   height = null;
 
   // when positioning child cards, this is how far they overlap; dynamically set by `onResize`
-  offset = null;
+  faceUpOffset = null;
+  faceDownOffset = null;
 
   // flag whether or not a card is moving around
   animating = false;
@@ -56,8 +57,6 @@ class Card {
    back.classList.add('back');
 
    this.element.append(front, back);
-
-   // needs to be face-down by default
   }
 
   // keep the object instance, but change card type
@@ -149,15 +148,12 @@ class Card {
   }
 
   flip(direction) {
-    let duration = 500;
+    let duration = direction ? 0 : 500;
 
-    // if `direction` is not set, then the effect is toggled
     if (direction === 'up') {
       this.faceUp = false;
-      duration = 0;
     } else if (direction === 'down') {
       this.faceUp = true;
-      duration = 0;
     }
 
     // set animation duration
@@ -173,6 +169,7 @@ class Card {
       this.element.children[1].style.transform = 'rotateY(180deg)'; // back
     }
 
+    // if `direction` is not set, then the effect is toggled
     this.faceUp = !this.faceUp;
   }
 
