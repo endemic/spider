@@ -48,7 +48,7 @@ const cards = [];
 // easy => 1 suit (spades)
 
 // TODO: get difficulty from modal form
-let difficulty = 'easy';
+let difficulty = 'medium';
 
 const initCards = () => {
   cards.forEach(c => {
@@ -266,15 +266,21 @@ const onUp = async () => {
     const cascade = cascades[i];
 
     if (grabbed.overlaps(cascade) && cascade.validPlay(card)) {
+      const undoGroup = [];
       // flip over the newly uncovered card
       if (card.parent.type === 'card' && !card.parent.faceUp) {
         card.parent.flip();
+
+        undoGroup.push({
+          card: card.parent,
+          flip: true
+        });
       }
 
       // set new parent
       let parent = cascade.lastCard;
 
-      undoStack.push({
+      undoGroup.push({
         card,
         parent,
         oldParent: card.parent
@@ -295,15 +301,14 @@ const onUp = async () => {
           source.animateTo(target.x, target.y, 50);
           source.zIndex = target.zIndex + 1;
           await waitAsync(50);
-
-          // TODO: add this group move to the undo stack
-          // it needs to be grouped in with the move that created the 13 card stack,
-          // since a full run auto-plays to foundation
+          // TODO: add to undo stack
         }
 
         // if king was on a face-down card, turn it face up
         if (cascade.lastCard.type === 'card' && !cascade.lastCard.faceUp) {
           cascade.lastCard.flip();
+
+          // TODO: add to undo stack
         }
 
         if (checkWin()) {
@@ -328,6 +333,8 @@ const onUp = async () => {
           });
         }
       }
+
+      undoStack.push(undoGroup);
 
       // valid play, so return out of the loop checking other cells
       return;
@@ -470,37 +477,13 @@ const onResize = () => {
 
 };
 
-const undo = () => {
-  if (undoStack.length < 1) {
-    log('No previously saved moves on the undo stack.');
-    return;
-  }
-
-  // get card state _before_ the most recent move
-  let { card, parent, oldParent } = undoStack.pop();
-
-  // reverse the relationship; remove attachment from "new" parent
-  parent.child = null;
-
-  // we're cheating here and re-using logic from the `Grabbed` class
-  // to handle moving/animating cards back to their previous position
-  grabbed.grab(card);
-
-  // total cheat
-  grabbed.moved = true;
-
-  grabbed.drop(oldParent);
-
-  updateMovableCardsLabel();
-};
-
 const onKeyDown = e => {
   // return unless the keypress is meta/contrl + z (for undo)
   if (!(e.metaKey || e.ctrlKey) || e.key !== 'z') {
     return;
   }
 
-  undo();
+  onUndo(e);
 };
 
 const onDeal = e => {
@@ -521,6 +504,37 @@ const onDeal = e => {
   }
 };
 
+const undo = undoObject => {
+  // get card state _before_ the most recent move
+  const { card, parent, oldParent, flip, points } = undoObject;
+
+  if (flip) {
+    card.flip();
+  }
+
+  if (points) {
+    // TODO: add scoring -- invert the point value
+    // addToScore(-points);
+  }
+
+  // some undo moves are only card flips
+  if (!parent) {
+    return;
+  }
+
+  // reverse the relationship; remove attachment from "new" parent
+  parent.child = null;
+
+  // we're cheating here and re-using logic from the `Grabbed` class
+  // to handle moving/animating cards back to their previous position
+  grabbed.grab(card);
+
+  // total cheat
+  grabbed.moved = true;
+
+  grabbed.drop(oldParent);
+};
+
 const onUndo = e => {
   e.preventDefault();
 
@@ -528,7 +542,24 @@ const onUndo = e => {
     return;
   }
 
-  undo();
+  if (undoStack.length < 1) {
+    log('No previously saved moves on the undo stack.');
+    return;
+  }
+
+  const previous = undoStack.pop();
+
+  // an "undo" can have multiple steps; e.g. moving a card and flipping
+  // the new top card; multi-step undos are stored in an array
+  if (Array.isArray(previous)) {
+    // the objects are pushed on to the group in order, so to correctly
+    // reverse, we need to reverse the list as well
+    previous.reverse().forEach(undo);
+  } else {
+    undo(previous);
+  }
+
+  updateMovableCardsLabel();
 };
 
 document.body.addEventListener('mousemove', onMove);

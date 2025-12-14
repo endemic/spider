@@ -60,6 +60,14 @@ class Card {
    // needs to be face-down by default
   }
 
+  // keep the object instance, but change card type
+  reset(suit, rank) {
+    this.suit = suit;
+    this.rank = rank;
+
+    this.element.querySelector('.front').src = `images/${this.suit}/${this.rank}.png`;
+  }
+
   toString() {
     return `${this.rank} ${this.suit}`;
   }
@@ -268,10 +276,10 @@ class Card {
       return true;
     }
 
-    // if card is same color as previous, or the rank difference is greater than 1,
+    // if card is same ~color~ suit as previous, or the rank difference is greater than 1,
     // then the subsequent cards are not in sequence
     for (let card of this.children()) {
-      if (/*card.parent.color === card.color || */card.diff(card.parent) !== -1) {
+      if (card.parent.suit !== card.suit || card.diff(card.parent) !== -1) {
         return false;
       }
     }
