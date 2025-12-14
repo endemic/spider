@@ -429,7 +429,9 @@ const onResize = () => {
   for (const cascade of cascades) {
     cascade.size = { width, height };
     log(`cascade size: ${width}, ${height}`)
-    cascade.offset = offset;
+    // cascade.offset = offset;
+    cascade.faceUpOffset = offset;
+    cascade.faceDownOffset = faceDownOffset;
   }
 
   for (const foundation of foundations) {
@@ -473,8 +475,6 @@ const onResize = () => {
   // CardWaterfall.onResize(windowWidth, windowHeight);
   talon.moveTo(windowWidth - windowMargin - margin - width, windowHeight - height - margin - status.offsetHeight);
   log(`moving talon to ${talon.x}, ${talon.y}`)
-
-
 };
 
 const onKeyDown = e => {

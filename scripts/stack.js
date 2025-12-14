@@ -18,6 +18,12 @@ class Stack {
   // when positioning child cards, this is how far they overlap
   offset = 25;
 
+  // show more of the face up cards when stacking
+  faceUpOffset = null;
+
+  // face down cards don't need to be as visible
+  faceDownOffset = null;
+
   get stackType() {
     return this.type;
   }
@@ -82,7 +88,7 @@ class Stack {
     // move child cards
     for (let card of this.children()) {
       card.moveTo(this.x, this.y + offset);
-      offset += this.offset;
+      offset += card.faceUp ? this.faceUpOffset : this.faceDownOffset;
     }
   }
 
@@ -97,7 +103,7 @@ class Stack {
     // determine height of stack + all cascading cards
     for (let card of this.children()) {
       // if cards in stacks are still face down, draw them closer together
-      let offset = card.faceUp ? this.offset : this.offset / 4;
+      let offset = card.faceUp ? this.faceUpOffset : this.faceDownOffset;
 
       if (cardCount > 0) {
         height += offset;
@@ -115,10 +121,7 @@ class Stack {
 
     this.element.style.width = `${this.width}px`;
     this.element.style.height = `${this.height}px`;
-
-    log(`setting ${this.type} size: ${width}, ${height}`);
   }
-
 
   contains(point) {
     return point.x > this.x &&
@@ -130,7 +133,7 @@ class Stack {
   // increment all z-indices for cards in this stack
   // such that they overlap correctly
   resetZIndex() {
-    let index = 0;
+    let index = this.zIndex;
 
     for (let card of this.children()) {
       card.zIndex = index;

@@ -109,7 +109,7 @@ class Grabbed extends Stack {
   grab(card) {
     this.child = card;
 
-    let index = 52; // highest possible z-index for a 52 card deck
+    let index = 999; // ensure visibility over all other objects
     for (let card of this.children()) {
       log(`setting z-index of grabbed card ${card} to be ${index}`);
       card.zIndex = index;
@@ -130,7 +130,9 @@ class Grabbed extends Stack {
 
     if (this.moved) {
 
-      // TODO: this is pretty stupid
+      // TODO: this is pretty stupid; the idea being that if `grabbed` drops on a card
+      // that's face up, we need to increase the offset so that the underlying card is still
+      // visible.
       let offset = card.offset;  // "faceDownOffset"
       if (target.faceUp) {
         offset = this.offset;  // "regular" offset
