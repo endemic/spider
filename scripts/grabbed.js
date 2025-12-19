@@ -55,7 +55,6 @@ class Grabbed extends Stack {
       return;
     }
 
-    // animate child cards
     let offset = 0;
 
     for (let card of this.children()) {
@@ -63,7 +62,8 @@ class Grabbed extends Stack {
 
       await waitAsync(50);
 
-      offset += this.offset;
+      // AFAIK we're only grabbing face up cards
+      offset += card.faceUpOffset;
     }
   }
 
@@ -78,7 +78,7 @@ class Grabbed extends Stack {
     this.width = width;
     this.height = height;
 
-    log(`setting ${this.type} size: ${width}, ${height}`);
+    console.log(`setting ${this.type} size: ${width}, ${height}`);
   }
 
   // returns true if the "grabbed" bounding box overlaps
@@ -124,7 +124,7 @@ class Grabbed extends Stack {
     // on the original parent
     target = target || card.parent;
 
-    log(`dropping on ${target.type || 'another card'}`);
+    console.debug(`dropping on ${target.type || target}`);
 
     card.setParent(target);
 
@@ -135,6 +135,8 @@ class Grabbed extends Stack {
       if (target.type === 'cascade') {
         offset = 0;
       }
+
+      console.debug(`animating to ${target}${target.faceUp ? ` (faceup)` : ` (facedown)`}`);
 
       this.animateTo({
         x: target.x,

@@ -48,7 +48,7 @@ const cards = [];
 // easy => 1 suit (spades)
 
 // TODO: get difficulty from modal form
-let difficulty = 'medium';
+let difficulty = 'easy';
 
 const initCards = () => {
   cards.forEach(c => {
