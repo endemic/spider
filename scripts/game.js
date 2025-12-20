@@ -33,9 +33,12 @@ for (let i = 0; i < 8; i += 1) {
   foundation.zIndex = i;
 }
 
-// TODO: show how many deals are left in talon
-const talon = new Talon();
-document.body.append(talon.element);
+const talons = [];
+for (let i = 0; i < 5; i += 1) {
+  const talon = new Talon();
+  talons.push(talon);
+  document.body.append(talon.element);
+}
 
 const grabbed = new Grabbed();
 
@@ -109,7 +112,7 @@ const reset = () => {
 
   cascades.forEach(c => c.child = null);
   foundations.forEach(f => f.child = null);
-  talon.child = null;
+  talons.forEach(t => t.child = null);
 
   time = 0;
   // score = 0;
@@ -139,8 +142,8 @@ const stackCards = () => {
   // move all cards to the talon
   for (let index = 0; index < cards.length; index += 1) {
     const card = cards[index];
-    card.moveTo(talon.x, talon.y);
-    card.setParent(talon.lastCard);
+    card.moveTo(talons[0].x, talons[0].y);
+    card.setParent(talons[0].lastCard);
     card.zIndex = index;
   }
 
@@ -149,11 +152,12 @@ const stackCards = () => {
 
 const deal = async () => {
   let offset = 0;
+  const firstTalon = talons[0];
 
   // initial deal is 54 cards
   for (let index = 0; index < 54; index += 1) {
     // const card = cards[index];
-    const card = talon.lastCard;
+    const card = firstTalon.lastCard;
 
     const cascade = cascades[index % cascades.length];
     const lastCard = cascade.lastCard;
@@ -175,6 +179,20 @@ const deal = async () => {
     // offset cards vertically after the first row
     offset = index < 9 ? 0 : card.faceDownOffset;
   };
+
+  // populate talons[1-4] from cards in [0]
+  for (let index = 1; index < talons.length; index += 1) {
+    const t = talons[index];
+
+    for (let j = 0; j < 10; j += 1) {
+      const card = firstTalon.lastCard;
+      const parent = t.lastCard;
+      card.setParent(parent);
+      card.moveTo(parent.x, parent.y);
+    }
+
+    t.resetZIndex();
+  }
 
   // increment games played counter
   const key = 'spider:playedGames';
@@ -201,7 +219,17 @@ cards.forEach(card => {
     }
 
     if (card.stackType === 'talon') {
-      // TODO: "You are not allowed to deal a new row while there are any empty slots."
+      // TODO: use non-blocking dialog instead of `alert`
+      for (let i = 0; i < cascades.count; i += 1) {
+        if (!cascades[i].hasCards) {
+          alert('You are not allowed to deal a new row while there are any empty slots.');
+          return;
+        }
+      }
+
+      // find talon that still has cards
+      const talon = talons.find(t => t.hasCards);
+
       // deal 10 cards to all the cascades
       for (const cascade of cascades) {
         const c = talon.lastCard;
@@ -442,7 +470,9 @@ const onResize = () => {
     card.faceDownOffset = faceDownOffset;
   }
 
-  talon.size = { width, height };
+  for (const talon of talons) {
+    talon.size = { width, height };
+  }
 
   grabbed.size = { width, height };
 
@@ -470,8 +500,14 @@ const onResize = () => {
 
   // Handle resizing <canvas> for card waterfall
   // CardWaterfall.onResize(windowWidth, windowHeight);
-  talon.moveTo(windowWidth - windowMargin - margin - width, windowHeight - height - margin - status.offsetHeight);
-  log(`moving talon to ${talon.x}, ${talon.y}`)
+
+  talons.forEach((t, i) => {
+    t.moveTo(
+      windowWidth - windowMargin - margin - width - (width / 4) * i,
+      windowHeight - height - margin - status.offsetHeight
+    );
+    t.zIndex = i;
+  })
 };
 
 const onKeyDown = e => {
