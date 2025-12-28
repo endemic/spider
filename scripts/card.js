@@ -177,12 +177,12 @@ class Card {
     this.element.style.filter = `invert(${value ? 1 : 0})`;
   }
 
-  invertMovableCards(cardCount) {
+  invertMovableCards() {
     let invert = false;
     let invertedParentCard = null;
 
     for (let c of this.children()) {
-      if (!invert && c.childCount < cardCount && c.childrenInSequence) {
+      if (!invert && c.childrenInSequence) {
         invert = true;
         invertedParentCard = c;
       }

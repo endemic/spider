@@ -1,5 +1,9 @@
 # TODO
 
+- [ ] Add scoring (Windows style -- 500 points to start, each move deducts 1 point, 100 points for play to foundation)
+- [ ] Add "moves" counter/display
+- [ ] Make new "win" screen
+- [ ] when undoing a move back on to a card that is turned face down as part of the undo, the card vertical offset is incorrect (see game.js:546)
 - [x] Check for win condition -- all foundations have cards
 - [ ] ensure king is displayed as last card on foundation
 - [ ] ensure foundations overlap correctly

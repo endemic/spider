@@ -1,16 +1,15 @@
-const CardWaterfall = {
-  fallingCard: null,
+const Fireworks = {
   canvas: document.querySelector('canvas'),
 
+  // TODO: create "particle" object
+  particles: [],
+
   start(callback) {
-    // set callback function to run when waterfall is finished
+    // set callback function to run when finished
     this.callback = callback || (() => {});
 
-    // get the first card
-    this.fallingCard = this.nextCard();
-
     // put canvas in front of DOM elements
-    this.canvas.style.zIndex = 52;
+    this.canvas.style.zIndex = 999;
 
     // need to permanently bind `this` in order to remove event listeners;
     // have to pass the exact same function reference to `removeEventListener`
@@ -54,7 +53,7 @@ const CardWaterfall = {
   },
 
   get randomVelocity() {
-    // NOTE: this is duplicative with `onResize`
+    // NOTE: this is duplicative with `Game.onResize`
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
@@ -88,80 +87,18 @@ const CardWaterfall = {
     return v;
   },
 
-  nextCard() {
-    // randomly choose foundation & pick top card off it
-    let randomFoundationIndex = Math.floor(Math.random() * foundations.length);
-    let f = foundations[randomFoundationIndex];
-
-    while (!f.hasCards) {
-      randomFoundationIndex = Math.floor(Math.random() * foundations.length);
-      f = foundations[randomFoundationIndex];
-
-      // if no more cards left, return a falsy value
-      if (!this.hasCards) {
-        return;
-      }
-    }
-
-    let card = f.lastCard;
-
-    // detatch card
-    card.parent.child = null;
-    card.parent = null;
-
-    // give random speed; `card` is an Object, so can assign arbitrary properties
-    card.velocity = this.randomVelocity;
-
-    return card;
-  },
-
   update() {
     const canvasWidth = parseInt(this.canvas.style.width, 10);
     const canvasHeight = parseInt(this.canvas.style.height, 10);
     const context = this.canvas.getContext('2d');
 
-    // pick next card if the existing one goes off screen
-    if (this.fallingCard.x + this.fallingCard.width < 0 || this.fallingCard.x > canvasWidth) {
-      this.fallingCard = this.nextCard();
-    }
-
-    let fallingCard = this.fallingCard;
-
-    // If we can't get the next card, that means we're out
-    if (!fallingCard) {
-      this.stop();
-
-      return;
-    }
-
     const scale = window.devicePixelRatio;
 
-    context.drawImage(fallingCard.element.children[0],
-      fallingCard.x * scale, fallingCard.y * scale,
-      fallingCard.width * scale, fallingCard.height * scale);
+    // TODO: draw "YOU WON" text here, enumerate over particles
 
-    const nextPosition = {
-      x: fallingCard.x + fallingCard.velocity.x,
-      y: fallingCard.y + fallingCard.velocity.y
-    };
-
-    // don't let the card go below the bottom edge of the screen
-    if (nextPosition.y + fallingCard.height > canvasHeight) {
-      nextPosition.y = canvasHeight - fallingCard.height;
-
-      // "bounce" the card
-      fallingCard.velocity.y = -fallingCard.velocity.y * 0.85;
-    }
-
-    // Move card DOM element
-    fallingCard.moveTo(nextPosition.x, nextPosition.y);
-
-    // update card velocity w/ "gravity" acceleration
-    fallingCard.velocity.y += canvasHeight * 0.001; // 0.1%
-  },
-
-  get hasCards() {
-    return foundations.some(f => f.hasCards);
+    // context.drawImage(fallingCard.element.children[0],
+    //   fallingCard.x * scale, fallingCard.y * scale,
+    //   fallingCard.width * scale, fallingCard.height * scale);
   },
 
   stop() {
@@ -172,14 +109,14 @@ const CardWaterfall = {
     // stop animation loop
     window.clearInterval(this.interval);
 
-    // put canvas back "behind" DOM elements
-    this.canvas.style.zIndex = 0;
+    // put canvas behind DOM elements
+    this.canvas.style.zIndex = -1;
 
-    // erase drawn card trails
+    // erase canvas
     const context = this.canvas.getContext('2d');
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    log('running waterfall callback');
+    console.debug('running fireworks callback');
     this.callback();
   }
 };

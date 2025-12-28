@@ -11,8 +11,8 @@ let gameOver = true;
 // allow deal without confirmation on app load
 let firstGame = true;
 
-// current time elapsed in seconds
-let time = 0;
+let score = 0;
+let moves = 0;
 
 // store a pointer to cards that are inverted, so as to revert them
 // after mouseup/touchend
@@ -55,7 +55,7 @@ let difficulty = 'easy';
 
 const initCards = () => {
   cards.forEach(c => {
-    // TODO remove any existing cards
+    // TODO remove or reset existing cards
   });
 
   // re-init based on difficulty
@@ -99,8 +99,10 @@ const checkWin = () => {
   });
 };
 
-// TODO probably update this to show how many moves have been completed
-const updateMovableCardsLabel = () => document.querySelector('#movable_cards').textContent = `Moves: TODO`;
+const updateStatusLabels = () => {
+  document.querySelector('#moves').textContent = `Moves: ${moves}`;
+  document.querySelector('#score').textContent = `Score: ${score}`;
+};
 
 const reset = () => {
   cards.forEach(c => {
@@ -114,12 +116,9 @@ const reset = () => {
   foundations.forEach(f => f.child = null);
   talons.forEach(t => t.child = null);
 
-  time = 0;
-  // score = 0;
-  document.querySelector('#time').textContent = `Time: ${time}`;
-
-//   TODO: do we need a "solve" button? I don't think so
-  document.querySelector('#solve_button').style.display = 'none';
+  moves = 0;
+  score = 500;
+  updateStatusLabels();
 
   undoStack.length = 0; // hack to empty an array
 };
@@ -147,7 +146,7 @@ const stackCards = () => {
     card.zIndex = index;
   }
 
-  log('done moving cards to talon')
+  console.debug('done moving cards to talon')
 };
 
 const deal = async () => {
@@ -220,7 +219,7 @@ cards.forEach(card => {
 
     if (card.stackType === 'talon') {
       // TODO: use non-blocking dialog instead of `alert`
-      for (let i = 0; i < cascades.count; i += 1) {
+      for (let i = 0; i < cascades.length; i += 1) {
         if (!cascades[i].hasCards) {
           alert('You are not allowed to deal a new row while there are any empty slots.');
           return;
@@ -247,7 +246,7 @@ cards.forEach(card => {
 
     // only allow sequences of cards to be picked up
     if (!card.childrenInSequence) {
-      log(`can't pick up ${card}, not a sequence!`);
+      console.debug(`can't pick up ${card}, not a sequence!`);
 
       // try to highlight cards that can be picked up
       // TODO: remove the numeric arg from this method
@@ -259,7 +258,7 @@ cards.forEach(card => {
     grabbed.grab(card);
     grabbed.setOffset(point);
 
-    log(`onDown on ${card}, offset: ${point.x}, ${point.y}`);
+    console.debug(`onDown on ${card}, offset: ${point.x}, ${point.y}`);
   };
 
   card.element.addEventListener('mousedown', onDown);
@@ -289,7 +288,7 @@ const onUp = async () => {
 
   const card = grabbed.child;
 
-  // check cascades
+  // check if card can be dropped on any cascades
   for (let i = 0; i < cascades.length; i += 1) {
     const cascade = cascades[i];
 
@@ -311,14 +310,17 @@ const onUp = async () => {
       undoGroup.push({
         card,
         parent,
-        oldParent: card.parent
+        oldParent: card.parent,
+        points: 1
       });
 
       grabbed.drop(parent);
 
-      log(`dropping ${card} on cascade #${i}`);
+      moves += 1;
+      score -= 1;
+      updateStatusLabels();
 
-      updateMovableCardsLabel();
+      console.debug(`dropping ${card} on cascade #${i}`);
 
       if (cascade.hasAllRanks) {
         const emptyFoundation = foundations.find(f => !f.hasCards);
@@ -339,6 +341,9 @@ const onUp = async () => {
           // TODO: add to undo stack
         }
 
+        score += 100;
+        updateStatusLabels();
+
         if (checkWin()) {
           gameOver = true;
 
@@ -347,15 +352,15 @@ const onUp = async () => {
           let wonGames = parseInt(localStorage.getItem(key), 10) || 0;
           localStorage.setItem(key, wonGames + 1);
 
-          // check for fastest game time
-          key = 'spider:fastestGame';
-          let fastestGame = localStorage.getItem(key);
-          if (time < fastestGame) {
-            localStorage.setItem(key, time);
+          // check for high score
+          key = 'spider:highScore';
+          let highScore = parseInt(localStorage.getItem(key), 10) || 0;
+          if (score > highScore) {
+            localStorage.setItem(key, score);
           }
 
-          // TODO: fireworks
-          CardWaterfall.start(() => {
+          // TODO: finish implementing this obj
+          Fireworks.start(() => {
             reset();
             stackCards();
           });
@@ -371,46 +376,11 @@ const onUp = async () => {
 
   // if we got this far, that means no valid move was made,
   // so the card(s) can go back to their original position
-  log('invalid move; dropping card(s) on original position');
+  console.debug('invalid move; dropping card(s) on original position');
 
   grabbed.drop();
 };
 
-const autoSolve = async () => {
-  // what are we even doing here?
-  // 1. while the game is not won
-  // 2. loop over all cards in cells/cascades
-  // 3. call the `attemptToPlayOnFoundation` method
-
-  // early return in case you're an idiot and call `autoSolve` manually
-  // it will totally be an infinite loop
-  if (!enableAutoSolve()) {
-    return;
-  }
-
-  while (!checkWin()) {
-    for (const stack of [cascades, cells].flat()) {
-      if (!stack.hasCards) {
-        continue;
-      }
-
-      const playedCard = attemptToPlayOnFoundation(stack.lastCard);
-
-      if (playedCard) {
-        // delay for a hot second before playing more, so all cards aren't moved to foundations simultaneously
-        await waitAsync(50);
-      }
-    }
-  }
-};
-  // let tableauDebug = document.createElement('div');
-  // tableauDebug.style.width = `${tableauWidth}px`;
-  // tableauDebug.style.height = `${tableauHeight}px`;
-  // tableauDebug.style.backgroundColor = 'rgba(255, 0, 255, 0.5)';
-  // tableauDebug.style.position = 'absolute';
-  // tableauDebug.style.top = `0`;
-  // tableauDebug.style.left = `${windowMargin}px`;
-  // document.body.append(tableauDebug);
 const onResize = () => {
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
@@ -498,8 +468,8 @@ const onResize = () => {
     f.moveTo(left + (width / 3 + margin) * i, windowHeight - height - margin - status.offsetHeight);
   });
 
-  // Handle resizing <canvas> for card waterfall
-  // CardWaterfall.onResize(windowWidth, windowHeight);
+  // Handle resizing <canvas> for fireworks
+  Fireworks.onResize(windowWidth, windowHeight);
 
   talons.forEach((t, i) => {
     t.moveTo(
@@ -543,14 +513,14 @@ const undo = undoObject => {
 
   if (flip) {
     card.flip();
-    // issue: if an undo moves a card back to a card that was flipped face up
+    // TODO: if an undo moves a card back to a card that was flipped face up
     // as part of the undo group, the move happens first, and the target is now face
     // up so the offset is wrong
   }
 
   if (points) {
-    // TODO: add scoring -- invert the point value
-    // addToScore(-points);
+    // invert the point value
+    score += -points;
   }
 
   // some undo moves are only card flips
@@ -609,28 +579,16 @@ window.addEventListener('keydown', onKeyDown);
 const dealButton = document.querySelector('#deal_button');
 const undoButton = document.querySelector('#undo_button');
 const aboutButton = document.querySelector('#about_button');
-const solveButton = document.querySelector('#solve_button');
 
 dealButton.addEventListener('mouseup', onDeal);
 undoButton.addEventListener('mouseup', onUndo);
 aboutButton.addEventListener('mouseup', showAboutScreen);
-solveButton.addEventListener('mouseup', autoSolve);
+
 // Mobile Safari seems to have some undocumented conditions that need
 // to be met before it will fire `click` events
 dealButton.addEventListener('touchend', onDeal);
 undoButton.addEventListener('touchend', onUndo);
 aboutButton.addEventListener('touchend', showAboutScreen);
-solveButton.addEventListener('touchend', autoSolve);
-
-// start timer
-window.setInterval(() => {
-  if (gameOver) {
-    return;
-  }
-
-  time += 1;
-  document.querySelector('#time').textContent = `Time: ${time}`;
-}, 1000);
 
 // initial resize
 onResize();
