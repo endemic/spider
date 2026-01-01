@@ -66,15 +66,17 @@ class Cascade extends Stack {
     const ranks = ['ace', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'jack', 'queen', 'king'];
 
     let c = this.lastCard;
+    let expectedRank = ranks.shift();
 
-    if (c.rank !== 'ace') {
+    if (c.rank !== expectedRank) {
       return false;
     }
 
-    while (c && c.faceUp && c.rank === ranks.shift()) {
+    do {
       c = c.parent;
-    }
+      expectedRank = ranks.shift();
+    } while (c && c.faceUp && c.rank === expectedRank && ranks.length);
 
-    return ranks.length === 0;
+    return ranks.length === 0 && c.rank === expectedRank;
   }
 }
