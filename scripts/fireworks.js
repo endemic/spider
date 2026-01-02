@@ -2,7 +2,12 @@ const Fireworks = {
   canvas: document.querySelector('canvas'),
 
   // TODO: create "particle" object
+  // particle needs to be a colored circle w/ black border; size based on tableau
+  // over time they shrink and turn black
   particles: [],
+
+  // color for "you win!" text
+  hue: 0,
 
   start(callback) {
     // set callback function to run when finished
@@ -21,6 +26,32 @@ const Fireworks = {
 
     // kick off animation loop
     this.interval = window.setInterval(() => this.update(), 16);
+  },
+
+  update() {
+    const canvasWidth = parseInt(this.canvas.style.width, 10);
+    const canvasHeight = parseInt(this.canvas.style.height, 10);
+    const context = this.canvas.getContext('2d');
+
+    const scale = window.devicePixelRatio;
+
+    const fontSize = canvasHeight / 16 * devicePixelRatio;
+    context.font = `bold ${fontSize}px sans-serif`;
+    context.textAlign = 'center';
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/hsl
+    context.fillStyle = `hsl(${this.hue}deg 100% 50%)`; // hue/saturation/lightness
+    context.fillText('You Won!', canvasWidth / 2, canvasHeight / 2);
+    context.strokeText('You Won!', canvasWidth / 2, canvasHeight / 2);
+
+    this.hue += 1;
+    if (this.hue > 360) {
+      this.hue = 0;
+    }
+
+
+    // context.drawImage(fallingCard.element.children[0],
+    //   fallingCard.x * scale, fallingCard.y * scale,
+    //   fallingCard.width * scale, fallingCard.height * scale);
   },
 
   onResize(width, height) {
@@ -54,6 +85,7 @@ const Fireworks = {
 
   get randomVelocity() {
     // NOTE: this is duplicative with `Game.onResize`
+    // TODO: cache all this stuff
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
@@ -85,20 +117,6 @@ const Fireworks = {
     log(v);
 
     return v;
-  },
-
-  update() {
-    const canvasWidth = parseInt(this.canvas.style.width, 10);
-    const canvasHeight = parseInt(this.canvas.style.height, 10);
-    const context = this.canvas.getContext('2d');
-
-    const scale = window.devicePixelRatio;
-
-    // TODO: draw "YOU WON" text here, enumerate over particles
-
-    // context.drawImage(fallingCard.element.children[0],
-    //   fallingCard.x * scale, fallingCard.y * scale,
-    //   fallingCard.width * scale, fallingCard.height * scale);
   },
 
   stop() {
