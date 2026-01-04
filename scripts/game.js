@@ -45,45 +45,32 @@ const grabbed = new Grabbed();
 // array to hold refs to each card obj
 const cards = [];
 
-// based on difficulty, determine the correct types of cards to be initialized
-// hard => 4 suits (2 decks)
-// med => 2 suits (hearts + spades)
-// easy => 1 suit (spades)
+// immediately initialize card objects
+while (cards.length < 104) { // 52 x 2 cards (two decks)
+  const card = new Card('spades', 'ace');
+  document.body.append(card.element);
+  cards.push(card);
+}
 
-// TODO: get difficulty from modal form
-let difficulty = 'easy';
-
-const initCards = () => {
-  cards.forEach(c => {
-    // TODO remove or reset existing cards
-  });
-
-  // re-init based on difficulty
+const setDifficulty = () => {
   const suitMap = {
-    hard: SUITS,
+    hard: ['hearts', 'spades', 'diamonds', 'clubs'],
     medium: ['hearts', 'spades'],
     easy: ['spades']
   };
 
-  while (cards.length < 104) { // 52 x 2 cards (two decks)
+  const difficulty = localStorage.getItem('spider:difficulty') || 'easy';
+
+  let i = 0;
+  while (i < cards.length) {
     for (let suit of suitMap[difficulty]) {
       RANKS.forEach(rank => {
-        // instantiate new card object
-        const card = new Card(suit, rank);
-
-        // add the card's HTML to the page
-        document.body.append(card.element);
-
-        // add the card object to a ref list
-        cards.push(card);
+        cards[i].reset(suit, rank);
+        i += 1;
       });
     }
   }
-}
-
-// immediately init cards; TODO do this when difficulty changes
-initCards();
-
+};
 
 const checkWin = () => {
   // ensure that each foundation has 13 cards; we don't check for matching suit
@@ -121,6 +108,8 @@ const reset = () => {
   updateStatusLabels();
 
   undoStack.length = 0; // hack to empty an array
+
+  setDifficulty();
 };
 
 const stackCards = () => {
@@ -162,14 +151,14 @@ const deal = async () => {
     const lastCard = cascade.lastCard;
 
     card.setParent(lastCard);
-    card.animateTo(lastCard.x, lastCard.y + offset, 0); // TODO: reset to .75s animation
+    card.animateTo(lastCard.x, lastCard.y + offset, 500);
 
     // only the last 10 cards are face up
     if (index > 43) {
       card.flip();
     }
 
-    // await waitAsync(50);
+    await waitAsync(50);
 
     // update z-index of the card _after_ the synchronous delay;
     // this gives the animation time to move the card away from the deck
@@ -229,9 +218,16 @@ cards.forEach(card => {
       // find talon that still has cards
       const talon = talons.find(t => t.hasCards);
 
+      if (!talon) {
+        return;
+      }
+
+      const undoGroup = [];
+
       // deal 10 cards to all the cascades
       for (const cascade of cascades) {
         const c = talon.lastCard;
+        const oldParent = c.parent;
         const parent = cascade.lastCard;
         c.setParent(parent);
         c.animateTo(parent.x, parent.y + card.faceUpOffset, 500);
@@ -239,7 +235,17 @@ cards.forEach(card => {
         wait(500).then(() => c.zIndex = parent.zIndex + 1);
         c.flip();
         await waitAsync(50);
+
+        // TODO: this aligns cards vertically on the talon
+        undoGroup.push({
+          card: c,
+          parent,
+          oldParent,
+          flip: true
+        });
       }
+
+      undoStack.push(undoGroup);
 
       return;
     }
@@ -248,9 +254,8 @@ cards.forEach(card => {
     if (!card.childrenInSequence) {
       console.debug(`can't pick up ${card}, not a sequence!`);
 
-      // try to highlight cards that can be picked up
-      // TODO: remove the numeric arg from this method
-      invertedCard = card.invertMovableCards(99);
+      // highlight cards that can be picked up
+      invertedCard = card.invertMovableCards();
 
       return;
     }
@@ -307,7 +312,10 @@ const onUp = async () => {
       // set new parent
       let parent = cascade.lastCard;
 
-      undoGroup.push({
+      // push on to the front in case a flip was already added
+      // tl;dr if the flip fires first, this card moves back to an
+      // incorrect offset
+      undoGroup.unshift({
         card,
         parent,
         oldParent: card.parent,
@@ -331,7 +339,13 @@ const onUp = async () => {
           source.animateTo(target.x, target.y, 50);
           source.zIndex = target.zIndex + 1;
           await waitAsync(50);
+
           // TODO: add to undo stack
+          undoGroup.push({
+            card: source,
+            parent: target,
+            oldParent: source.parent
+          });
         }
 
         // if king was on a face-down card, turn it face up
@@ -339,6 +353,10 @@ const onUp = async () => {
           cascade.lastCard.flip();
 
           // TODO: add to undo stack
+          undoGroup.push({
+            card: cascade.lastCard,
+            flip: true
+          });
         }
 
         score += 100;
@@ -359,7 +377,6 @@ const onUp = async () => {
             localStorage.setItem(key, score);
           }
 
-          // TODO: finish implementing this obj
           Fireworks.start(() => {
             reset();
             stackCards();
@@ -564,8 +581,6 @@ const onUndo = e => {
   } else {
     undo(previous);
   }
-
-  updateMovableCardsLabel();
 };
 
 document.body.addEventListener('mousemove', onMove);
@@ -595,6 +610,10 @@ onResize();
 
 // stack cards on left-most foundation
 stackCards();
+
+// Fireworks.start(() => {
+//   console.debug('done!');
+// });
 
 // set up a win condition; comment out `stackCards` to use this
 // if (DEBUG) {

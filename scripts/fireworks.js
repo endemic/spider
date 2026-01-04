@@ -24,6 +24,8 @@ const Fireworks = {
     this.canvas.addEventListener('mouseup', this.stop);
     this.canvas.addEventListener('touchend', this.stop);
 
+
+
     // kick off animation loop
     this.interval = window.setInterval(() => this.update(), 16);
   },

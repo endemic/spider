@@ -1,5 +1,5 @@
 const statsKeys = ['playedGames', 'wonGames'/*, 'fastestGame'*/];
-const prefixed = key => `freecell:${key}`;
+const prefixed = key => `spider:${key}`;
 
 const loadStats = () => {
   // Load any saved data
@@ -27,6 +27,11 @@ const showAboutScreen = e => {
   e.preventDefault();
 
   loadStats();
+
+  // ensure correct difficulty value is selected
+  const currentDifficulty = localStorage.getItem(prefixed('difficulty')) || 'easy';
+  document.querySelector(`#${currentDifficulty}`).checked = true;
+
   document.querySelector('#about').showModal();
 };
 
@@ -35,6 +40,13 @@ const hideAboutScreen = e => {
 
   document.querySelector('#about').close();
 };
+
+document.querySelectorAll('input[type=radio]').forEach(element => {
+  element.addEventListener('click', e => {
+    localStorage.setItem(prefixed('difficulty'), e.target.value);
+    console.debug(`setting difficulty to ${e.target.value}`);
+  });
+});
 
 document.querySelector('#reset').addEventListener('mouseup', resetStats);
 document.querySelector('#return').addEventListener('mouseup', hideAboutScreen);
