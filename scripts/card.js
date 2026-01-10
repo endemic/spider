@@ -220,8 +220,6 @@ class Card {
     this.width = width;
     this.height = height;
 
-    // log(`setting card size: ${width}, ${height}`);
-
     this.element.style.width = `${this.width}px`;
     this.element.style.height = `${this.height}px`;
   }

@@ -139,7 +139,7 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('scripts/service-worker.js')
-        .then(() => { log('Service Worker Registered'); });
+        .then(() => { console.debug('Service Worker Registered'); });
     }
   </script>
 

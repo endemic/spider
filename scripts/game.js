@@ -158,7 +158,7 @@ const deal = async () => {
       card.flip();
     }
 
-    await waitAsync(50);
+    // await waitAsync(50);
 
     // update z-index of the card _after_ the synchronous delay;
     // this gives the animation time to move the card away from the deck
@@ -228,18 +228,17 @@ cards.forEach(card => {
       for (const cascade of cascades) {
         const c = talon.lastCard;
         const oldParent = c.parent;
-        const parent = cascade.lastCard;
-        c.setParent(parent);
-        c.animateTo(parent.x, parent.y + card.faceUpOffset, 500);
+        const newParent = cascade.lastCard;
+        c.setParent(newParent);
+        c.animateTo(newParent.x, newParent.y + card.faceUpOffset, 500);
         c.zIndex = 999; // ensure animated card is on top of all others
-        wait(500).then(() => c.zIndex = parent.zIndex + 1);
+        wait(500).then(() => c.resetZIndex());
         c.flip();
         await waitAsync(50);
 
-        // TODO: this aligns cards vertically on the talon
         undoGroup.push({
           card: c,
-          parent,
+          parent: newParent,
           oldParent,
           flip: true
         });
@@ -524,15 +523,12 @@ const onDeal = e => {
   }
 };
 
-const undo = undoObject => {
+const undo = async (step) => {
   // get card state _before_ the most recent move
-  const { card, parent, oldParent, flip, points } = undoObject;
+  const { card, parent, oldParent, flip, points } = step;
 
   if (flip) {
     card.flip();
-    // TODO: if an undo moves a card back to a card that was flipped face up
-    // as part of the undo group, the move happens first, and the target is now face
-    // up so the offset is wrong
   }
 
   if (points) {
@@ -545,17 +541,27 @@ const undo = undoObject => {
     return;
   }
 
-  // reverse the relationship; remove attachment from "new" parent
-  parent.child = null;
+  card.setParent(oldParent);
 
-  // we're cheating here and re-using logic from the `Grabbed` class
-  // to handle moving/animating cards back to their previous position
-  grabbed.grab(card);
+  let offset = oldParent.faceUp ? card.faceUpOffset : card.faceDownOffset;
 
-  // total cheat
-  grabbed.moved = true;
+  // Don't add card overlap if dropping on an empty cascade or talon
+  if (oldParent.type === 'cascade' || oldParent.stackType === 'talon') {
+    offset = 0;
+  }
 
-  grabbed.drop(oldParent);
+  card.animateTo(oldParent.x, oldParent.y + offset); // 300ms default duration
+
+  for (let c of card.children()) {
+    c.animateTo(oldParent.x, oldParent.y + offset);
+
+    await waitAsync(50);
+
+    // AFAIK we're only grabbing face up cards
+    offset += c.faceUpOffset;
+  }
+
+  card.resetZIndex();
 };
 
 const onUndo = e => {
@@ -577,7 +583,9 @@ const onUndo = e => {
   if (Array.isArray(previous)) {
     // the objects are pushed on to the group in order, so to correctly
     // reverse, we need to reverse the list as well
-    previous.reverse().forEach(undo);
+    for (const step of previous.reverse()) {
+      undo(step);
+    }
   } else {
     undo(previous);
   }

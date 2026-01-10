@@ -111,7 +111,6 @@ class Grabbed extends Stack {
 
     let index = 999; // ensure visibility over all other objects
     for (let card of this.children()) {
-      log(`setting z-index of grabbed card ${card} to be ${index}`);
       card.zIndex = index;
       index += 1;
     }
@@ -124,19 +123,19 @@ class Grabbed extends Stack {
     // on the original parent
     target = target || card.parent;
 
-    console.debug(`dropping on ${target.type || target}`);
+    console.debug(`dropping on ${target}`);
 
     card.setParent(target);
 
     if (this.moved) {
       let offset = target.faceUp ? card.faceUpOffset : card.faceDownOffset;
 
-      // Don't add card overlap if dropping on an empty cascade
-      if (target.type === 'cascade') {
+      // Don't add card overlap if dropping on an empty cascade or talon
+      if (target.type === 'cascade' || target.stackType === 'talon') {
         offset = 0;
       }
 
-      console.debug(`animating to ${target}${target.faceUp ? ` (faceup)` : ` (facedown)`}`);
+      console.debug(`animating to ${target.toString()}${target.faceUp ? ` (faceup)` : ` (facedown)`}; (${target.x}, ${target.y + offset})`);
 
       this.animateTo({
         x: target.x,

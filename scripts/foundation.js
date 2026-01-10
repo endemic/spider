@@ -38,7 +38,5 @@ class Foundation extends Stack {
 
     this.element.style.width = `${this.width}px`;
     this.element.style.height = `${this.height}px`;
-
-    log(`setting ${this.type} size: ${width}, ${height}`);
   }
 }
