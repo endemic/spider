@@ -15,15 +15,6 @@ class Stack {
 
   zIndex = 0;
 
-  // when positioning child cards, this is how far they overlap
-  offset = 25;
-
-  // show more of the face up cards when stacking
-  faceUpOffset = null;
-
-  // face down cards don't need to be as visible
-  faceDownOffset = null;
-
   get stackType() {
     return this.type;
   }
@@ -50,13 +41,6 @@ class Stack {
     }
 
     return last;
-  }
-
-  get nextCardPoint() {
-    return {
-      x: this.x,
-      y: this.y
-    };
   }
 
   toString() {

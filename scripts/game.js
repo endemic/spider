@@ -318,7 +318,7 @@ const onUp = async () => {
         card,
         parent,
         oldParent: card.parent,
-        points: 1
+        points: -1
       });
 
       grabbed.drop(parent);
@@ -329,21 +329,22 @@ const onUp = async () => {
 
       console.debug(`dropping ${card} on cascade #${i}`);
 
+      // play A->K on next open foundation
       if (cascade.hasAllRanks) {
         const emptyFoundation = foundations.find(f => !f.hasCards);
         for (let j = 0; j < 13; j += 1) {
           const source = cascade.lastCard;
           const target = emptyFoundation.lastCard;
+          const oldParent = source.parent;
           source.setParent(target);
           source.animateTo(target.x, target.y, 50);
           source.zIndex = target.zIndex + 1;
           await waitAsync(50);
 
-          // TODO: add to undo stack
           undoGroup.push({
             card: source,
             parent: target,
-            oldParent: source.parent
+            oldParent
           });
         }
 
@@ -351,7 +352,6 @@ const onUp = async () => {
         if (cascade.lastCard.type === 'card' && !cascade.lastCard.faceUp) {
           cascade.lastCard.flip();
 
-          // TODO: add to undo stack
           undoGroup.push({
             card: cascade.lastCard,
             flip: true
@@ -552,6 +552,8 @@ const undo = async (step) => {
 
   card.animateTo(oldParent.x, oldParent.y + offset); // 300ms default duration
 
+  offset = card.faceUpOffset;
+
   for (let c of card.children()) {
     c.animateTo(oldParent.x, oldParent.y + offset);
 
@@ -562,6 +564,10 @@ const undo = async (step) => {
   }
 
   card.resetZIndex();
+
+  moves -= 1;
+
+  updateStatusLabels();
 };
 
 const onUndo = e => {
@@ -572,7 +578,7 @@ const onUndo = e => {
   }
 
   if (undoStack.length < 1) {
-    log('No previously saved moves on the undo stack.');
+    console.debug('No previously saved moves on the undo stack.');
     return;
   }
 

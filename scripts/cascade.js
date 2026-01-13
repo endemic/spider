@@ -9,38 +9,6 @@ class Cascade extends Stack {
     this.element.src = 'images/other/cascade.png';
   }
 
-  get size() {
-    if (!this.hasCards) {
-      return {
-        width: this.width,
-        height: this.height
-      };
-    }
-
-    const width = this.width; // all cards are the same width
-    let height = this.height;
-
-    // first card completely overlaps the cascade,
-    // so we don't use its height value
-    let card = this.child;
-
-    // Not actually using any data from child cards,
-    // just enumerating over them to determine height
-    for (let c of card.children()) {
-      height += this.offset;
-    }
-
-    return { width, height };
-  }
-
-  set size({width, height}) {
-    this.width = width;
-    this.height = height;
-
-    this.element.style.width = `${this.width}px`;
-    this.element.style.height = `${this.height}px`;
-  }
-
   validPlay (card) {
     const lastCard = this.lastCard;
 

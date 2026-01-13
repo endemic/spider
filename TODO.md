@@ -1,12 +1,14 @@
 # TODO
 
-- [ ] Add scoring (Windows style -- 500 points to start, each move deducts 1 point, 100 points for play to foundation)
-- [ ] Add "moves" counter/display
-- [ ] Make new "win" screen
-- [ ] when undoing a move back on to a card that is turned face down as part of the undo, the card vertical offset is incorrect (see game.js:546)
+- [ ] When undo'ing stacks of cards, the first card's vertical offset is wrong (too small)
+- [x] Add scoring (Windows style -- 500 points to start, each move deducts 1 point, 100 points for play to foundation)
+  * fix score undo
+- [x] Add "moves" counter/display
+- [x] Make new "win" screen
+- [x] when undoing a move back on to a card that is turned face down as part of the undo, the card vertical offset is incorrect (see game.js:546)
 - [x] Check for win condition -- all foundations have cards
-- [ ] ensure king is displayed as last card on foundation
-- [ ] ensure foundations overlap correctly
+- [x] ensure king is displayed as last card on foundation
+- [x] ensure foundations overlap correctly
 - [x] 54th dealt card can't be picked up -- it still has a child referenced in the talon
 - [x] When a cascade contains a full 13 sequence of cards, move them to a foundation
 - [x] When a face-up card returns to a face-down stack, its offset is incorrectly increased
