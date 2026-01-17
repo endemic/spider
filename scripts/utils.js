@@ -53,11 +53,14 @@ const dialog = {
 
     if (typeof onConfirmFunction === 'function') {
       dialog.onConfirm = onConfirmFunction;
+    } else {
+      // TODO: hide "No" button; change text of "Yes" to "OK"
     }
   },
 
   close: () => {
     document.querySelector('dialog#confirm').close();
+    // TODO: reset buttons here
   }
 };
 

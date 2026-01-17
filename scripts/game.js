@@ -112,7 +112,7 @@ const reset = () => {
   setDifficulty();
 };
 
-const stackCards = () => {
+const stackCards = async () => {
   // shuffle deck
   let currentIndex = cards.length;
   let randomIndex;
@@ -134,6 +134,8 @@ const stackCards = () => {
     card.setParent(talons[0].lastCard);
     card.zIndex = index;
   }
+
+  await waitAsync(200);
 
   console.debug('done moving cards to talon')
 };
@@ -181,6 +183,8 @@ const deal = async () => {
 
     t.resetZIndex();
   }
+
+  firstTalon.resetZIndex();
 
   // increment games played counter
   const key = 'spider:playedGames';
@@ -376,9 +380,9 @@ const onUp = async () => {
             localStorage.setItem(key, score);
           }
 
-          Fireworks.start(() => {
+          Fireworks.start(async () => {
             reset();
-            stackCards();
+            await stackCards();
           });
         }
       }
@@ -489,10 +493,11 @@ const onResize = () => {
 
   talons.forEach((t, i) => {
     t.moveTo(
-      windowWidth - windowMargin - margin - width - (width / 4) * i,
+      windowWidth - windowMargin - margin - (width * 2) + (width / 4) * i,
       windowHeight - height - margin - status.offsetHeight
     );
-    t.zIndex = i;
+    t.zIndex = talons.length - i;
+    t.resetZIndex();
   })
 };
 
@@ -505,19 +510,19 @@ const onKeyDown = e => {
   onUndo(e);
 };
 
-const onDeal = e => {
+const onDeal = async e => {
   e.preventDefault();
 
   if (firstGame) {
     reset();
-    stackCards();
+    await stackCards();
     deal();
 
     firstGame = false;
   } else {
-    dialog.show('Deal again?', () => {
+    dialog.show('Deal again?', async () => {
       reset();
-      stackCards();
+      await stackCards();
       deal();
     });
   }
@@ -545,7 +550,8 @@ const undo = async (step) => {
 
   let offset = oldParent.faceUp ? card.faceUpOffset : card.faceDownOffset;
 
-  // Don't add card overlap if dropping on an empty cascade or talon
+  // Don't add vertical offset if dropping on an empty cascade or talon
+  // the card should completely overlap these "parent" types
   if (oldParent.type === 'cascade' || oldParent.stackType === 'talon') {
     offset = 0;
   }
@@ -555,7 +561,7 @@ const undo = async (step) => {
   offset = card.faceUpOffset;
 
   for (let c of card.children()) {
-    c.animateTo(oldParent.x, oldParent.y + offset);
+    c.animateTo(card.x, card.y + offset);
 
     await waitAsync(50);
 
@@ -623,7 +629,9 @@ aboutButton.addEventListener('touchend', showAboutScreen);
 onResize();
 
 // stack cards on left-most foundation
-stackCards();
+(async () => {
+  await stackCards();
+})();
 
 // Fireworks.start(() => {
 //   console.debug('done!');
