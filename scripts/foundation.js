@@ -39,4 +39,20 @@ class Foundation extends Stack {
     this.element.style.width = `${this.width}px`;
     this.element.style.height = `${this.height}px`;
   }
+
+  moveTo(x, y) {
+    this.x = x;
+    this.y = y;
+
+    // if a visible component in the DOM exists, move it
+    if (this.element) {
+      this.element.style.transition = 'translate 0ms linear';
+      this.element.style.translate = `${this.x}px ${this.y}px 0px`;
+    }
+
+    // move child cards (all on top of each other)
+    for (let card of this.children()) {
+      card.moveTo(this.x, this.y);
+    }
+  }
 }

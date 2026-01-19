@@ -211,10 +211,9 @@ cards.forEach(card => {
     }
 
     if (card.stackType === 'talon') {
-      // TODO: use non-blocking dialog instead of `alert`
       for (let i = 0; i < cascades.length; i += 1) {
         if (!cascades[i].hasCards) {
-          alert('You are not allowed to deal a new row while there are any empty slots.');
+          dialog.show('You are not allowed to deal while there are empty cascades.');
           return;
         }
       }
@@ -249,6 +248,8 @@ cards.forEach(card => {
       }
 
       undoStack.push(undoGroup);
+
+      // TODO: Check cascades for cards in sequence here
 
       return;
     }
@@ -334,33 +335,12 @@ const onUp = async () => {
       console.debug(`dropping ${card} on cascade #${i}`);
 
       // play A->K on next open foundation
+      // TODO: make this check when dealing from talon
       if (cascade.hasAllRanks) {
         const emptyFoundation = foundations.find(f => !f.hasCards);
-        for (let j = 0; j < 13; j += 1) {
-          const source = cascade.lastCard;
-          const target = emptyFoundation.lastCard;
-          const oldParent = source.parent;
-          source.setParent(target);
-          source.animateTo(target.x, target.y, 50);
-          source.zIndex = target.zIndex + 1;
-          await waitAsync(50);
+        const foundationUndo = await cascade.playToFoundation(emptyFoundation);
 
-          undoGroup.push({
-            card: source,
-            parent: target,
-            oldParent
-          });
-        }
-
-        // if king was on a face-down card, turn it face up
-        if (cascade.lastCard.type === 'card' && !cascade.lastCard.faceUp) {
-          cascade.lastCard.flip();
-
-          undoGroup.push({
-            card: cascade.lastCard,
-            flip: true
-          });
-        }
+        undoGroup.splice(undoGroup.length, 0, ...foundationUndo);
 
         score += 100;
         updateStatusLabels();

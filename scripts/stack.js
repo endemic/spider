@@ -72,7 +72,7 @@ class Stack {
     // move child cards
     for (let card of this.children()) {
       card.moveTo(this.x, this.y + offset);
-      offset += card.faceUp ? this.faceUpOffset : this.faceDownOffset;
+      offset += card.faceUp ? card.faceUpOffset : card.faceDownOffset;
     }
   }
 
@@ -87,7 +87,7 @@ class Stack {
     // determine height of stack + all cascading cards
     for (let card of this.children()) {
       // if cards in stacks are still face down, draw them closer together
-      let offset = card.faceUp ? this.faceUpOffset : this.faceDownOffset;
+      let offset = card.faceUp ? card.faceUpOffset : card.faceDownOffset;
 
       if (cardCount > 0) {
         height += offset;

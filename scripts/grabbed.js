@@ -77,8 +77,6 @@ class Grabbed extends Stack {
   set size({width, height}) {
     this.width = width;
     this.height = height;
-
-    console.log(`setting ${this.type} size: ${width}, ${height}`);
   }
 
   // returns true if the "grabbed" bounding box overlaps

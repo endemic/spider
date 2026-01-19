@@ -54,13 +54,19 @@ const dialog = {
     if (typeof onConfirmFunction === 'function') {
       dialog.onConfirm = onConfirmFunction;
     } else {
-      // TODO: hide "No" button; change text of "Yes" to "OK"
+      // If no "confirm" function, we assume that the modal is just for info display;
+      // Hide the "no" button and change "Yes" to "OK"
+      element.querySelector('button[value="no"]').style.display = 'none';
+      element.querySelector('button[value="yes"]').textContent = 'OK';
     }
   },
 
   close: () => {
-    document.querySelector('dialog#confirm').close();
-    // TODO: reset buttons here
+    const element = document.querySelector('dialog#confirm');
+    element.close();
+    // reset buttons for yes/no confirm
+    element.querySelector('button[value="no"]').style.display = 'block';
+    element.querySelector('button[value="yes"]').textContent = 'Yes';
   }
 };
 
