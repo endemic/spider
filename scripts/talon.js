@@ -1,16 +1,6 @@
 class Talon extends Stack {
   type = 'talon';
 
-  offset = 0;
-
-  constructor() {
-    super();
-
-    this.element = document.createElement('img');
-    this.element.classList.add('talon');
-    this.element.src = 'images/other/talon.png';
-  }
-
   get size() {
     return {
       width: this.width,
@@ -21,17 +11,11 @@ class Talon extends Stack {
   set size({width, height}) {
     this.width = width;
     this.height = height;
-
-    this.element.style.width = `${this.width}px`;
-    this.element.style.height = `${this.height}px`;
   }
 
   moveTo(x, y) {
     this.x = x;
     this.y = y;
-
-    this.element.style.transition = 'translate 0ms linear';
-    this.element.style.translate = `${this.x}px ${this.y}px 0px`;
 
     for (let card of this.children()) {
       card.moveTo(this.x, this.y);
