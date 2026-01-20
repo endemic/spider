@@ -13,7 +13,7 @@
           "type": "image/png"
       }
   ],
-  "start_url": "/freecell/",
+  "start_url": "/spider/",
   "theme_color": "#00aa55",
   "background_color": "#00aa55",
   "display": "standalone"
