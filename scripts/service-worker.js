@@ -1,6 +1,6 @@
 self.addEventListener('install', e => {
   e.waitUntil(
-      caches.open('freecell').then(cache => cache.addAll([
+      caches.open('spider').then(cache => cache.addAll([
           '../stylesheets/main.css',
           '../index.html',
           '../about.html',
