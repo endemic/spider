@@ -72,19 +72,9 @@ const setDifficulty = () => {
   }
 };
 
-const checkWin = () => {
-  // ensure that each foundation has 13 cards; we don't check for matching suit
-  // or ascending rank because those checks are done when the card is played
-  return foundations.every(f => {
-    let count = 0;
-
-    for (let _card of f.children()) {
-      count += 1;
-    }
-
-    return count === 13;
-  });
-};
+// ensure that each foundation has 13 cards; we don't check for matching suit
+// or ascending rank because those checks are done when the card is played
+const checkWin = () => foundations.every(f => f.cardCount === 13);
 
 const updateStatusLabels = () => {
   document.querySelector('#moves').textContent = `Moves: ${moves}`;
@@ -135,6 +125,23 @@ const stackCards = async () => {
     card.zIndex = index;
   }
 
+  // populate talons[1-4] from cards in [0]
+  for (let index = 1; index < talons.length; index += 1) {
+    const t = talons[index];
+    console.log(`moving cards from first talon to talon ${index}`)
+
+    for (let j = 0; j < 10; j += 1) {
+      const card = talons[0].lastCard;
+      const parent = t.lastCard;
+      card.setParent(parent);
+      card.moveTo(parent.x, parent.y);
+    }
+
+    t.resetZIndex();
+  }
+
+  talons[0].resetZIndex();
+
   await waitAsync(200);
 
   console.debug('done moving cards to talon')
@@ -160,7 +167,7 @@ const deal = async () => {
       card.flip();
     }
 
-    // await waitAsync(50);
+    await waitAsync(35);
 
     // update z-index of the card _after_ the synchronous delay;
     // this gives the animation time to move the card away from the deck
@@ -169,22 +176,6 @@ const deal = async () => {
     // offset cards vertically after the first row
     offset = index < 9 ? 0 : card.faceDownOffset;
   };
-
-  // populate talons[1-4] from cards in [0]
-  for (let index = 1; index < talons.length; index += 1) {
-    const t = talons[index];
-
-    for (let j = 0; j < 10; j += 1) {
-      const card = firstTalon.lastCard;
-      const parent = t.lastCard;
-      card.setParent(parent);
-      card.moveTo(parent.x, parent.y);
-    }
-
-    t.resetZIndex();
-  }
-
-  firstTalon.resetZIndex();
 
   // increment games played counter
   const key = 'spider:playedGames';
@@ -323,7 +314,8 @@ const onUp = async () => {
         card,
         parent,
         oldParent: card.parent,
-        points: -1
+        points: -1,
+        move: 1
       });
 
       grabbed.drop(parent);
@@ -340,6 +332,7 @@ const onUp = async () => {
         const emptyFoundation = foundations.find(f => !f.hasCards);
         const foundationUndo = await cascade.playToFoundation(emptyFoundation);
 
+        // adds "move A->K to foundation" to undo stack
         undoGroup.splice(undoGroup.length, 0, ...foundationUndo);
 
         score += 100;
@@ -510,7 +503,7 @@ const onDeal = async e => {
 
 const undo = async (step) => {
   // get card state _before_ the most recent move
-  const { card, parent, oldParent, flip, points } = step;
+  const { card, parent, oldParent, flip, points, move } = step;
 
   if (flip) {
     card.flip();
@@ -551,7 +544,10 @@ const undo = async (step) => {
 
   card.resetZIndex();
 
-  moves -= 1;
+  // Property decrement "moves" counter
+  if (move) {
+    moves += -move;
+  }
 
   updateStatusLabels();
 };

@@ -3,8 +3,8 @@
 - [x] When undo'ing stacks of cards, the first card's vertical offset is wrong (too small)
 - [ ] Add high score? (How does that work with different difficulties?)
 - [ ] Add fireworks
-- [ ] Add <dialog> for "no open cascades" message when dealing from talon
-- [ ] Stack height calculation seems wrong -- dropping at the end of a large stack doesn't trigger collision detection
+- [x] Add <dialog> for "no open cascades" message when dealing from talon
+- [x] Stack height calculation seems wrong -- dropping at the end of a large stack doesn't trigger collision detection
 - [x] Add scoring (Windows style -- 500 points to start, each move deducts 1 point, 100 points for play to foundation)
   * fix score undo
 - [x] Add "moves" counter/display
